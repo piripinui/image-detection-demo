@@ -1,0 +1,18 @@
+{
+  "name": "google_maptile_demo",
+  "version": "0.0.1",
+  "author": "Phil",
+  "dependencies": {
+    "express": "^4.15.4",
+    "helmet": "^3.8.1",
+    "promise": "^8.0.1",
+    "request": "^2.81.0",
+    "shelljs": "^0.8.2",
+    "url-pattern": "^1.0.3"
+  },
+  "engines": {
+    "node": ">0.10.45",
+    "npm": "3.10.2"
+  },
+  "scripts": {}
+}
