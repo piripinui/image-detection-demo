@@ -296,7 +296,30 @@ function initPanorama() {
 	} */  
 }
 
-function init() {		
+function doAnalyse() {
+	console.log("Performing analysis...");
+	
+	var cvs = $(".widget-scene-canvas");
+	var data = cvs[cvs.length - 1];
+	
+	$.ajax({
+		url: "/saveimage",
+		type: "POST",
+		contentType: "application/base64",
+		data: data.toDataURL(),
+		success: function(data) {
+			console.log("Image save requested successful");
+		}
+	})
+}
+
+function init() {	
+	var el = document.getElementById("analyse");
+	if (el.addEventListener)
+		el.addEventListener("click", doAnalyse, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doAnalyse);
+	
 	$.ajax({
 		url : "/gettileapikey",
 		type : "GET",

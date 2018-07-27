@@ -9,7 +9,8 @@ tileApiKey,
 streetviewSessionToken, streetviewPanos, streetviewMetadata,
 Promise = require('promise'),
 path = require('path'),
-shell = require('shelljs');
+shell = require('shelljs'),
+bodyParser = require('body-parser');
 
 var resultDir = process.cwd() + "\\data";
 
@@ -149,9 +150,9 @@ function getStreetviewTiles(res, results) {
         //of all of them together
         var buffer = Buffer.concat(data);
 		
-		saveTile(results.zoom, results.tilex, results.tiley, streetviewPanos.panoIds[0], buffer);
+		//saveTile(results.zoom, results.tilex, results.tiley, streetviewPanos.panoIds[0], buffer);
 		
-        console.log("File written");
+        //console.log("File written");
 		
 		// Send back to requestor.
 		res.send(buffer);
@@ -248,6 +249,62 @@ app.get('/getmapsapikey', function(req, res) {
 	res.send(mapsApiKey);
 	res.status(200).end();
 });
+
+app.use(bodyParser.text({
+	type: "application/base64",
+	limit: "5MB"
+}));
+
+function base64MimeType(encoded) {
+  var result = null;
+
+  if (typeof encoded !== 'string') {
+    return result;
+  }
+
+  var mime = encoded.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
+
+  if (mime && mime.length) {
+    result = mime[1];
+  }
+
+  return result;
+}
+
+app.post('/saveimage', function (req, res) {
+  res.send('Got a POST request');
+  //console.log(req.body);
+  
+  var mt = base64MimeType(req.body);
+  console.log("Mime type = " + mt);
+  
+  var filename;
+  
+  switch(mt) {
+		case 'image/png':
+			filename = "foo.png";
+			break;
+		case 'image/jpeg':
+			filename = "foo.jpeg";
+			break;
+		default:
+			break;
+  }
+  
+	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
+	var buf = new Buffer(data, 'base64');
+  
+  //var buf = Buffer.from(req.body, 'base64');
+  
+  fs.writeFile(filename, buf, function(err) {
+	if (err) 
+		res.status(500).end();
+	else {
+		console.log("File " + filename + " written.");
+		res.status(200).end();
+	}
+  });
+})
 
 app.listen(listenPort, function () {
 	console.log('google_maptiles_demo app listening on port ' + listenPort + '!');
