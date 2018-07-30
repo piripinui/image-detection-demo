@@ -296,19 +296,29 @@ function initPanorama() {
 	} */  
 }
 
+function Base64Encode(str, encoding = 'utf-8') {
+    var bytes = new (TextEncoder || TextEncoderLite)(encoding).encode(str);        
+    return base64js.fromByteArray(bytes);
+}
+
 function doAnalyse() {
 	console.log("Performing analysis...");
 	
 	var cvs = $(".widget-scene-canvas");
 	var data = cvs[cvs.length - 1];
 	
+	$("#analysis").append('<div class="loader">Processing...</div>');
+	
 	$.ajax({
 		url: "/saveimage",
 		type: "POST",
 		contentType: "application/base64",
 		data: data.toDataURL(),
-		success: function(data) {
+		success: function(processedData) {
 			console.log("Image save requested successful");
+			$("#results").append('<img id="processed"></img>');
+			$("#processed").attr("src", "data:image/jpeg;base64," + processedData);
+			$(".loader").remove();
 		}
 	})
 }

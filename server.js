@@ -10,7 +10,10 @@ streetviewSessionToken, streetviewPanos, streetviewMetadata,
 Promise = require('promise'),
 path = require('path'),
 shell = require('shelljs'),
-bodyParser = require('body-parser');
+bodyParser = require('body-parser'),
+imagemin = require('imagemin'),
+pngToJpeg = require('png-to-jpeg'),
+cp = require('child_process');;
 
 var resultDir = process.cwd() + "\\data";
 
@@ -272,37 +275,85 @@ function base64MimeType(encoded) {
 }
 
 app.post('/saveimage', function (req, res) {
-  res.send('Got a POST request');
   //console.log(req.body);
   
-  var mt = base64MimeType(req.body);
-  console.log("Mime type = " + mt);
+	var mt = base64MimeType(req.body);
+	console.log("Mime type = " + mt);
   
-  var filename;
+	var filename;
+	var d = new Date();
+	var fnPrefix = (d.getTime() / 1000).toString();
   
-  switch(mt) {
+	switch(mt) {
 		case 'image/png':
-			filename = "foo.png";
+			filename = fnPrefix + ".png";
 			break;
 		case 'image/jpeg':
-			filename = "foo.jpeg";
+			filename = fnPrefix + ".jpeg";
 			break;
 		default:
 			break;
-  }
+	}
   
 	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
 	var buf = new Buffer(data, 'base64');
   
-  //var buf = Buffer.from(req.body, 'base64');
-  
-  fs.writeFile(filename, buf, function(err) {
-	if (err) 
-		res.status(500).end();
-	else {
-		console.log("File " + filename + " written.");
-		res.status(200).end();
-	}
+	fs.writeFile("images/" + filename, buf, function(err) {
+		if (err) 
+			res.status(500).end();
+		else {
+			var fullFilename = "images/" + filename;
+			console.log("File " + fullFilename);
+			
+			imagemin([fullFilename], 'images', {
+				plugins: [
+					pngToJpeg({quality: 90})
+				]
+			}).then((files) => {
+				// Please keep in mind that all files now have the wrong extension
+				// You might want to change them manually
+				
+				var newFn = fullFilename.replace("png", "jpg");
+				fs.rename(fullFilename, newFn, function(err) {
+					if ( err ) console.log('ERROR: ' + err);
+					console.log("Renamed " + fullFilename + " to " + newFn);
+				});
+				
+				cp.execFile('process_imagery.bat', (err, stdout, stderr) => {
+					if (err) {
+						// node couldn't execute the command
+						console.log("Problem running process_imagery: " + err);
+						res.status(500).end();
+						return;
+					}
+
+					// the *entire* stdout and stderr (buffered)
+					console.log(`stdout: ${stdout}`);
+					console.log(`stderr: ${stderr}`);
+					
+					// Delete the captured file.
+					fs.unlink(newFn, (err) => {
+						if (err) throw err;
+						console.log(newFn + ' was deleted');
+					});
+					
+					// Return the processed image to the requestor.
+				  
+					fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
+						if (err) {
+							res.status(500).end();
+							return;
+						}
+						else {
+							console.log("Returning jpeg image in base64 encoding...");
+							var buf = new Buffer(data).toString('base64');
+							res.writeHead(200, {'Content-Type': 'text/base64'});
+							res.end(buf);
+						}
+					});
+				});
+			});
+		}
   });
 })
 
