@@ -1,4 +1,5 @@
 var sessionToken,
+map,view,
 satelliteOptions = {
 	"mapType" : "satellite",
 	"language" : "gb-GB",
@@ -223,21 +224,23 @@ function getTileUrl(pano, zoom, tileX, tileY) {
 
 function getPanoramaData(pano) {
 	//console.log("Getting panorama...");
-	return {
-	  location: {
-		pano: getPano(),  
-		description: makeAddressString(),
-		latLng: new google.maps.LatLng(streetviewMetadata.lat, streetviewMetadata.lng)
-	  },
-	  links: streetviewMetadata.links,
-	  copyright: 'Imagery ' + streetviewMetadata.copyright,
-	  tiles: {
-		tileSize: new google.maps.Size(streetviewMetadata.tileWidth, streetviewMetadata.tileHeight),
-		worldSize: new google.maps.Size(streetviewMetadata.imageWidth, streetviewMetadata.imageHeight),
-		centerHeading: getHeading(),
-		getTileUrl: getTileUrl
-	  }
-	};
+	if (pano == "custom") {
+		return {
+		  location: {
+			pano: getPano(),  
+			description: makeAddressString(),
+			latLng: new google.maps.LatLng(streetviewMetadata.lat, streetviewMetadata.lng)
+		  },
+		  links: streetviewMetadata.links,
+		  copyright: 'Imagery ' + streetviewMetadata.copyright,
+		  tiles: {
+			tileSize: new google.maps.Size(streetviewMetadata.tileWidth, streetviewMetadata.tileHeight),
+			worldSize: new google.maps.Size(streetviewMetadata.imageWidth, streetviewMetadata.imageHeight),
+			centerHeading: getHeading(),
+			getTileUrl: getTileUrl
+		  }
+		};
+	}
 }
 
 function getPano() {
@@ -263,6 +266,18 @@ function initPanorama() {
 			{
 				pano: getPano()
 			});
+			
+		panorama.addListener('pano_changed', function() {
+			console.log("Panorama moved");
+		});
+		
+		panorama.addListener('position_changed', function() {
+			var pos = panorama.getPosition();
+			var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
+			console.log("Panorama position changed: " + pos);
+			view.setCenter(coord);
+		});
+
 			
 		// Register a provider for the custom panorama.
 		panorama.registerPanoProvider(function(pano) {
@@ -316,6 +331,9 @@ function doAnalyse() {
 		data: data.toDataURL(),
 		success: function(processedData) {
 			console.log("Image save requested successful");
+			if ($("#processed")) {
+				$("#processed").remove();
+			}
 			$("#results").append('<img id="processed"></img>');
 			$("#processed").attr("src", "data:image/jpeg;base64," + processedData);
 			$(".loader").remove();
@@ -371,7 +389,11 @@ function setupMap() {
 
 		console.log("Created Google tile source using " + satelliteSource.getUrls()[0]);
 
-		var map = new ol.Map({
+		view = new ol.View({
+					center : [0, 0],
+					zoom : 2
+				});
+		map = new ol.Map({
 				layers : [
 					new ol.layer.Tile({
 						source : satelliteSource
@@ -381,10 +403,7 @@ function setupMap() {
 					attribution : false
 				}).extend([attribution]),
 				target : 'map',
-				view : new ol.View({
-					center : [0, 0],
-					zoom : 2
-				})
+				view : view
 			});
 			
 		$.ajax({
