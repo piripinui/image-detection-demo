@@ -319,7 +319,43 @@ app.post('/saveimage', function (req, res) {
 					console.log("Renamed " + fullFilename + " to " + newFn);
 				});
 				
-				cp.execFile('process_imagery.bat', (err, stdout, stderr) => {
+				request({
+					uri: "http://localhost:3200/startdetection",
+					method: "GET"
+				},
+				function (err, resp, data) {
+					if (err) {
+						// node couldn't execute the command
+						console.log("Problem running process_imagery: " + err);
+						res.status(500).end();
+						return;
+					}
+					
+					console.log("Start detection request succeeded...(" + data + " seconds).");
+					
+					// Delete the captured file.
+					fs.unlink(newFn, (err) => {
+						if (err) throw err;
+						console.log(newFn + ' was deleted');
+					});
+					
+					// Return the processed image to the requestor.
+				  
+					fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
+						if (err) {
+							res.status(500).end();
+							return;
+						}
+						else {
+							console.log("Returning jpeg image in base64 encoding...");
+							var buf = new Buffer(data).toString('base64');
+							res.writeHead(200, {'Content-Type': 'text/base64'});
+							res.end(buf);
+						}
+					});
+				});
+				
+				/* cp.execFile('process_imagery.bat', (err, stdout, stderr) => {
 					if (err) {
 						// node couldn't execute the command
 						console.log("Problem running process_imagery: " + err);
@@ -351,7 +387,7 @@ app.post('/saveimage', function (req, res) {
 							res.end(buf);
 						}
 					});
-				});
+				}); */
 			});
 		}
   });
