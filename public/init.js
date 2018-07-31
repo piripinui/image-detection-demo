@@ -1,5 +1,5 @@
 var sessionToken,
-map,view,
+map,view, markerFeature, markerSource,
 satelliteOptions = {
 	"mapType" : "satellite",
 	"language" : "gb-GB",
@@ -116,10 +116,6 @@ function getSession(options, maptype) {
 
 function getSatelliteSession() {
 	return getSession(satelliteOptions, 'satellite');
-}
-
-function getRoadSession() {
-	return getSession(roadOptions, 'roadmap');
 }
 
 function getStreetviewSession() {
@@ -276,6 +272,7 @@ function initPanorama() {
 			var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
 			console.log("Panorama position changed: " + pos);
 			view.setCenter(coord);
+			setMarker(coord);
 		});
 
 			
@@ -295,20 +292,7 @@ function initPanorama() {
 		  else {
 			  console.log("Panorama ids do not match");
 		  }
-		});
-	/* }
-	else {
-		console.log("Resetting panorama...");
-		panorama.setPano(streetviewMetadata.panoId);
-		panorama.setPosition(new google.maps.LatLng(streetviewMetadata.lat, streetviewMetadata.lng));
-		panorama.setPov({
-			heading: streetviewMetadata.heading,
-			pitch: 0
-		});
-		panorama.registerPanoProvider(function(pano) {
-			return getPanoramaData(pano);
-		});
-	} */  
+		}); 
 }
 
 function Base64Encode(str, encoding = 'utf-8') {
@@ -376,6 +360,14 @@ function init() {
 	});
 }
 
+function setMarker(coord) {
+	if (typeof markerFeature != "undefined")
+		markerSource.removeFeature(markerFeature);
+	markerFeature = new ol.Feature(new ol.geom.Point(coord));
+	
+	markerSource.addFeature(markerFeature);
+}
+
 function setupMap() {
 	var attribution = new ol.control.Attribution({
 		collapsible : false
@@ -388,6 +380,32 @@ function setupMap() {
 			});
 
 		console.log("Created Google tile source using " + satelliteSource.getUrls()[0]);
+		
+		markerSource = new ol.source.Vector({wrapX: false});
+		
+		var stroke = new ol.style.Stroke({color: 'black', width: 2});
+		var fill = new ol.style.Fill({color: 'red'});
+		
+		/* var defaultStyle = new ol.style.Style({
+			image: new ol.style.Circle({
+                    fill: fill,
+                    stroke: stroke,
+                    radius: 7
+                }),
+		  }); */
+		  
+		var defaultStyle = new ol.style.Style({
+			image: new ol.style.Icon({
+					src: 'markers-google-api.jpg',
+					scale: 0.08,
+					anchor: [1, 1]
+			})
+		});
+
+		var vector = new ol.layer.Vector({
+			source: markerSource,
+			style: defaultStyle
+		});
 
 		view = new ol.View({
 					center : [0, 0],
@@ -397,7 +415,8 @@ function setupMap() {
 				layers : [
 					new ol.layer.Tile({
 						source : satelliteSource
-					})
+					}),
+					vector
 				],
 				controls : ol.control.defaults({
 					attribution : false
@@ -425,6 +444,8 @@ function setupMap() {
 		map.on('singleclick', function(evt) {      
             var latLon = ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326');                                           
 			console.log("Click event: " + latLon[0] + ", " + latLon[1]);	
+			
+			setMarker(evt.coordinate);
 			
 			var locations = {
 				'locations' : [
