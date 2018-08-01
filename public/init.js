@@ -1,5 +1,5 @@
 var sessionToken,
-map,view, markerFeature, markerSource,
+map,view, markerFeature, markerSource, heading,
 satelliteOptions = {
 	"mapType" : "satellite",
 	"language" : "gb-GB",
@@ -126,7 +126,7 @@ function updateAttribution(map) {
 	var extent = map.getView().calculateExtent(map.getSize());
 	var projectedExtent = ol.proj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
 
-	console.log(projectedExtent);
+	//console.log(projectedExtent);
 
 	$.ajax({
 		url : "https://www.googleapis.com/tile/v1/viewport?session=" + satelliteSessionToken + "&zoom=" + map.getView().getZoom() + "&north=" + projectedExtent[3] + "&south=" + projectedExtent[1] + "&east=" + projectedExtent[2] + "&west=" + projectedExtent[0] + "&key=" + tileApiKey,
@@ -272,7 +272,24 @@ function initPanorama() {
 			console.log("Panorama position changed: " + pos);
 			view.setCenter(coord);
 			setMarker(coord);
+			heading = panorama.getPov().heading;
 		});
+		
+		panorama.addListener('pov_changed', function() {
+			heading = panorama.getPov().heading;
+			// Update marker.
+			var defaultStyle = new ol.style.Style({
+				image: new ol.style.Icon({
+						src: 'location-arrow-outline-filled.png',
+						scale: 0.1,
+						rotation: Math.radians(heading)
+				})
+			});
+			markerFeature.setStyle(defaultStyle);
+		});
+		
+		if (typeof heading == "undefined")
+			heading = 0;
 
 			
 		// Register a provider for the custom panorama.
@@ -362,7 +379,15 @@ function init() {
 function setMarker(coord) {
 	if (typeof markerFeature != "undefined")
 		markerSource.removeFeature(markerFeature);
+	var defaultStyle = new ol.style.Style({
+			image: new ol.style.Icon({
+					src: 'location-arrow-outline-filled.png',
+					scale: 0.1,
+					rotation: Math.radians(heading)
+			})
+		});
 	markerFeature = new ol.Feature(new ol.geom.Point(coord));
+	markerFeature.setStyle(defaultStyle);
 	
 	markerSource.addFeature(markerFeature);
 }
@@ -387,9 +412,8 @@ function setupMap() {
 		  
 		var defaultStyle = new ol.style.Style({
 			image: new ol.style.Icon({
-					src: 'markers-google-api.jpg',
-					scale: 0.08,
-					anchor: [1, 1]
+					src: 'location-arrow-outline-filled.png',
+					scale: 0.1
 			})
 		});
 
@@ -428,7 +452,7 @@ function setupMap() {
 		});
 
 		map.on("moveend", function (e) {
-			console.log("Map moved");
+			//console.log("Map moved");
 			updateAttribution(e.map);
 		});
 		
@@ -480,3 +504,13 @@ function setupMap() {
 		console.log("Got streetview session token.");
 	});
 }
+
+// Converts from degrees to radians.
+Math.radians = function(degrees) {
+  return degrees * Math.PI / 180;
+};
+ 
+// Converts from radians to degrees.
+Math.degrees = function(radians) {
+  return radians * 180 / Math.PI;
+};
