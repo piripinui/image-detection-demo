@@ -132,7 +132,7 @@ function updateAttribution(map) {
 		url : "https://www.googleapis.com/tile/v1/viewport?session=" + satelliteSessionToken + "&zoom=" + map.getView().getZoom() + "&north=" + projectedExtent[3] + "&south=" + projectedExtent[1] + "&east=" + projectedExtent[2] + "&west=" + projectedExtent[0] + "&key=" + tileApiKey,
 		type : "GET",
 		success : function (data) {
-			$('#satellite span').text("Satellite: " + data.copyright);
+			$('#attribution span').text(data.copyright);
 		}
 	})
 }
@@ -248,14 +248,6 @@ function getHeading() {
 }
 
 function initPanorama() {
-	//if (typeof panorama == "undefined") {
-		/* if (typeof panorama != "undefined") {
-			// tear everything down before redefining it.
-			
-			$("#street-view").remove()
-			$("#panel").append('<div id="street-view"></div>');
-			delete panorama;
-		} */
 		console.log("Creating panorama...");
 		panorama = new google.maps.StreetViewPanorama(
 			document.getElementById('street-view'),
@@ -385,14 +377,6 @@ function setupMap() {
 		
 		var stroke = new ol.style.Stroke({color: 'black', width: 2});
 		var fill = new ol.style.Fill({color: 'red'});
-		
-		/* var defaultStyle = new ol.style.Style({
-			image: new ol.style.Circle({
-                    fill: fill,
-                    stroke: stroke,
-                    radius: 7
-                }),
-		  }); */
 		  
 		var defaultStyle = new ol.style.Style({
 			image: new ol.style.Icon({
