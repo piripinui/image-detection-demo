@@ -132,6 +132,13 @@ function updateAttribution(map) {
 		url : "https://www.googleapis.com/tile/v1/viewport?session=" + satelliteSessionToken + "&zoom=" + map.getView().getZoom() + "&north=" + projectedExtent[3] + "&south=" + projectedExtent[1] + "&east=" + projectedExtent[2] + "&west=" + projectedExtent[0] + "&key=" + tileApiKey,
 		type : "GET",
 		success : function (data) {
+			var zoom = view.getZoom();
+			
+			if (zoom >= 15)
+				$("#attribution").css("color", "white");
+			else
+				$("#attribution").css("color", "black");
+			
 			$('#attribution span').text(data.copyright);
 		}
 	})
