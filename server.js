@@ -331,7 +331,9 @@ app.post('/saveimage', function (req, res) {
 						return;
 					}
 					
-					console.log("Start detection request succeeded...(" + data + " seconds).");
+					console.log("Start detection request succeeded..." + data);
+					
+					result = JSON.parse(data);
 					
 					// Delete the captured file.
 					fs.unlink(newFn, (err) => {
@@ -349,8 +351,9 @@ app.post('/saveimage', function (req, res) {
 						else {
 							console.log("Returning jpeg image in base64 encoding...");
 							var buf = new Buffer(data).toString('base64');
-							res.writeHead(200, {'Content-Type': 'text/base64'});
-							res.end(buf);
+							result.data = buf;
+							res.writeHead(200, {'Content-Type': 'application/json'});
+							res.end(JSON.stringify(result));
 						}
 					});
 				});

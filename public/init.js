@@ -329,13 +329,29 @@ function doAnalyse() {
 		type: "POST",
 		contentType: "application/base64",
 		data: data.toDataURL(),
-		success: function(processedData) {
+		success: function(result) {
 			console.log("Image save requested successful");
+			processedData = result.data;
 			if ($("#processed")) {
 				$("#processed").remove();
 			}
 			$("#results").append('<img id="processed"></img>');
 			$("#processed").attr("src", "data:image/jpeg;base64," + processedData);
+			
+			if ($("#object_table"))
+				$("#object_table").remove();
+			
+			tab = '<table id="object_table"><tr><th>Equipment</th><th>Probability</th>';
+			
+			for (i = 0; i < result.classes.length; i++) {
+				elems = result.classes[i].split(":");
+				tab += "<tr><td>" + elems[0] + "</td><td>" + elems[1] + "</td></tr>";
+			}
+			
+			tab += "</table>";
+			
+			$("#objects").append(tab);
+			
 			$(".loader").remove();
 		}
 	})
