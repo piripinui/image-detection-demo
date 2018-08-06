@@ -11,4 +11,10 @@ The image recognition is based on a Tensorflow image recognition example you can
 
 https://github.com/bourdakos1/Custom-Object-Detection
 
-Some modifications to this example have been done to specifically detect poles, transformers and streetlights. These can be found in the Custom-Object-Detection directory. These should be overlaid over a clone of the repo above.
+Some modifications to this example have been done to specifically detect poles, transformers and streetlights. These can be found in the `Custom-Object-Detection` directory. These should be overlaid over a clone of the repo above.
+The main file is in a subdirectory called `object_detection` and is called `google_pole_object_detection_runner.py`. This is the script that should be run and when running it creates a web service that will process image files in a directory called `images` below the root directory. It will create new images labelled with detected equipment in `images/processed`.
+To run the script execute a command line like this
+
+`python object_detection/google_pole_object_detection_runner.py 3200`
+
+The last parameter defines the port number the service will run on.
