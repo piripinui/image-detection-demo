@@ -35,4 +35,4 @@ Create a PYTHONPATH variable while in `google_maptiles_demo/Custom-Object-Detect
 
 ``export PYTHONPATH=`pwd`:`pwd`/slim``
 
-Load all the Python dependencies using pip.
+Load all the Python dependencies using pip. Note that one of the dependencies is for the web component - you can find instructions on how to load this at http://webpy.org/.
