@@ -6,7 +6,9 @@ The map client is defined in the public directory. It is a basic Openlayers clie
 
 The app's server is defined in `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
 
-`node server.js`
+`node server.js
+
+By default this server runs on port 3100.
 
 The client is in the `public` directory. To start it, type the following into a Chrome browser:
 
