@@ -26,3 +26,13 @@ To run the script execute a command line like this
 `python object_detection/google_pole_object_detection_runner.py 3200`
 
 The last parameter defines the port number the service will run on.
+## Installation
+For the image recognition services, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths:
+
+Update the PATH variable as required by Python.
+
+Create a PYTHONPATH variable while in `google_maptiles_demo/Custom-Object-Detection` directory as follows:
+
+``export PYTHONPATH=`pwd`:`pwd`/slim``
+
+Load all the Python dependencies using pip.
