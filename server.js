@@ -350,47 +350,20 @@ app.post('/saveimage', function (req, res) {
 						}
 						else {
 							console.log("Returning jpeg image in base64 encoding...");
-							var buf = new Buffer(data).toString('base64');
-							result.data = buf;
-							res.writeHead(200, {'Content-Type': 'application/json'});
-							res.end(JSON.stringify(result));
+							try {
+								var imgBuf = new Buffer(data);
+								var buf = imgBuf.toString('base64');
+								result.data = buf;
+								res.writeHead(200, {'Content-Type': 'application/json'});
+								res.end(JSON.stringify(result));
+							}
+							catch(err) {
+								console.log("Failed to return processed image: " + err);
+								res.status(500).end();
+							}
 						}
 					});
 				});
-				
-				/* cp.execFile('process_imagery.bat', (err, stdout, stderr) => {
-					if (err) {
-						// node couldn't execute the command
-						console.log("Problem running process_imagery: " + err);
-						res.status(500).end();
-						return;
-					}
-
-					// the *entire* stdout and stderr (buffered)
-					console.log(`stdout: ${stdout}`);
-					console.log(`stderr: ${stderr}`);
-					
-					// Delete the captured file.
-					fs.unlink(newFn, (err) => {
-						if (err) throw err;
-						console.log(newFn + ' was deleted');
-					});
-					
-					// Return the processed image to the requestor.
-				  
-					fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
-						if (err) {
-							res.status(500).end();
-							return;
-						}
-						else {
-							console.log("Returning jpeg image in base64 encoding...");
-							var buf = new Buffer(data).toString('base64');
-							res.writeHead(200, {'Content-Type': 'text/base64'});
-							res.end(buf);
-						}
-					});
-				}); */
 			});
 		}
   });

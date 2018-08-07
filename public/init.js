@@ -263,13 +263,13 @@ function initPanorama() {
 			});
 			
 		panorama.addListener('pano_changed', function() {
-			console.log("Panorama moved");
+			//console.log("Panorama moved");
 		});
 		
 		panorama.addListener('position_changed', function() {
 			var pos = panorama.getPosition();
 			var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
-			console.log("Panorama position changed: " + pos);
+			//console.log("Panorama position changed: " + pos);
 			view.setCenter(coord);
 			setMarker(coord);
 			heading = panorama.getPov().heading;
@@ -306,7 +306,7 @@ function initPanorama() {
 			});
 		  }
 		  else {
-			  console.log("Panorama ids do not match");
+			  //console.log("Panorama ids do not match");
 		  }
 		}); 
 }
@@ -353,6 +353,16 @@ function doAnalyse() {
 			$("#objects").append(tab);
 			
 			$(".loader").remove();
+		},
+		error: function(err) {
+			console.log("Image save failed.");
+			if ($("#processed")) {
+				$("#processed").remove();
+			}
+			if ($("#object_table"))
+				$("#object_table").remove();
+			
+			$("#objects").append("<span>Image processing failed</span>");
 		}
 	})
 }
