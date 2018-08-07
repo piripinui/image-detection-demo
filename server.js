@@ -316,52 +316,52 @@ app.post('/saveimage', function (req, res) {
 				var newFn = fullFilename.replace("png", "jpg");
 				fs.rename(fullFilename, newFn, function(err) {
 					if ( err ) console.log('ERROR: ' + err);
-					console.log("Renamed " + fullFilename + " to " + newFn);
-				});
-				
-				request({
-					uri: "http://localhost:3200/startdetection",
-					method: "GET"
-				},
-				function (err, resp, data) {
-					// Delete the captured file.
-					fs.unlink(newFn, (err) => {
-						if (err) throw err;
-						console.log(newFn + ' was deleted');
-					});
+					console.log("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
 					
-					if (err) {
-						// node couldn't execute the command
-						console.log("Problem running process_imagery: " + err);
-						res.status(500).end();
-						return;
-					}
-					
-					console.log("Start detection request succeeded..." + data);
-					
-					result = JSON.parse(data);
-					
-					// Return the processed image to the requestor.
-				  
-					fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
+					request({
+						uri: "http://localhost:3200/startdetection",
+						method: "GET"
+					},
+					function (err, resp, data) {
+						// Delete the captured file.
+						fs.unlink(newFn, (err) => {
+							if (err) throw err;
+							console.log(newFn + ' was deleted');
+						});
+						
 						if (err) {
+							// node couldn't execute the command
+							console.log("Problem running process_imagery: " + err);
 							res.status(500).end();
 							return;
 						}
-						else {
-							console.log("Returning jpeg image in base64 encoding...");
-							try {
-								var imgBuf = new Buffer(data);
-								var buf = imgBuf.toString('base64');
-								result.data = buf;
-								res.writeHead(200, {'Content-Type': 'application/json'});
-								res.end(JSON.stringify(result));
-							}
-							catch(err) {
-								console.log("Failed to return processed image: " + err);
+						
+						console.log("Start detection request succeeded..." + data);
+						
+						result = JSON.parse(data);
+						
+						// Return the processed image to the requestor.
+					  
+						fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
+							if (err) {
 								res.status(500).end();
+								return;
 							}
-						}
+							else {
+								console.log("Returning jpeg image in base64 encoding...");
+								try {
+									var imgBuf = new Buffer(data);
+									var buf = imgBuf.toString('base64');
+									result.data = buf;
+									res.writeHead(200, {'Content-Type': 'application/json'});
+									res.end(JSON.stringify(result));
+								}
+								catch(err) {
+									console.log("Failed to return processed image: " + err);
+									res.status(500).end();
+								}
+							}
+						});
 					});
 				});
 			});

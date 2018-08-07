@@ -362,7 +362,8 @@ function doAnalyse() {
 			if ($("#object_table"))
 				$("#object_table").remove();
 			
-			$("#objects").append("<span>Image processing failed</span>");
+			$("#objects").append('<span id="object_table">Image processing failed</span>');
+			$(".loader").remove();
 		}
 	})
 }

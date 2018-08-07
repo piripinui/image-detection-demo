@@ -15,7 +15,10 @@ import logging
 from io import StringIO
 from PIL import Image
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 from utils import visualization_utils as vis_util
 from utils import label_map_util
