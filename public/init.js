@@ -367,6 +367,10 @@ function doAnalyse() {
 		}
 	})
 }
+	
+function doSweep() {
+	console.log("Sweeping...");
+}		
 
 function init() {	
 	var el = document.getElementById("analyse");
@@ -374,6 +378,12 @@ function init() {
 		el.addEventListener("click", doAnalyse, false);
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doAnalyse);
+	
+	var el = document.getElementById("sweep");
+	if (el.addEventListener)
+		el.addEventListener("click", doSweep, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doSweep);
 	
 	$.ajax({
 		url : "/gettileapikey",
