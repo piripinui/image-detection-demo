@@ -324,6 +324,12 @@ app.post('/saveimage', function (req, res) {
 					method: "GET"
 				},
 				function (err, resp, data) {
+					// Delete the captured file.
+					fs.unlink(newFn, (err) => {
+						if (err) throw err;
+						console.log(newFn + ' was deleted');
+					});
+					
 					if (err) {
 						// node couldn't execute the command
 						console.log("Problem running process_imagery: " + err);
@@ -334,12 +340,6 @@ app.post('/saveimage', function (req, res) {
 					console.log("Start detection request succeeded..." + data);
 					
 					result = JSON.parse(data);
-					
-					// Delete the captured file.
-					fs.unlink(newFn, (err) => {
-						if (err) throw err;
-						console.log(newFn + ' was deleted');
-					});
 					
 					// Return the processed image to the requestor.
 				  
