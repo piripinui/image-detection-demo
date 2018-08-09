@@ -1,5 +1,13 @@
 var sessionToken,
-map,view, markerFeature, markerSource, heading,
+map,view, markerFeature, markerSource, poleSource, heading,
+styles = {
+	pole: new ol.style.Style({
+			image: new ol.style.Icon({
+					src: 'location-arrow-outline-filled.png',
+					scale: 0.1
+			})
+		})
+},
 satelliteOptions = {
 	"mapType" : "satellite",
 	"language" : "gb-GB",
@@ -346,6 +354,44 @@ function doAnalyse() {
 			for (i = 0; i < result.classes.length; i++) {
 				elems = result.classes[i].split(":");
 				tab += "<tr><td>" + elems[0] + "</td><td>" + elems[1] + "</td></tr>";
+				
+				// Add markers.
+				switch(elems[0]) {
+					case 'pole': 
+						var gCoord= panorama.getPosition();
+						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
+						poleFeature = new ol.Feature(new ol.geom.Point(coord));
+						
+						var poleStyle = new ol.style.Style({
+							image: new ol.style.Icon({
+									src: 'location-arrow-outline-filled.png',
+									scale: 0.1,
+									rotation: Math.radians(panorama.getPov().heading)
+							})
+						});
+						poleFeature.setStyle(poleStyle);
+	
+						poleSource.addFeature(poleFeature);
+						break;
+					case 'transformer':
+						var gCoord= panorama.getPosition();
+						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
+						txFeature = new ol.Feature(new ol.geom.Point(coord));
+						
+						var txStyle = new ol.style.Style({
+							image: new ol.style.Icon({
+									src: 'tx_arrow.png',
+									scale: 0.05,
+									rotation: Math.radians(panorama.getPov().heading)
+							})
+						});
+						txFeature.setStyle(txStyle);
+	
+						txSource.addFeature(txFeature);
+						break;
+					default:
+						break;
+				}
 			}
 			
 			tab += "</table>";
@@ -370,7 +416,46 @@ function doAnalyse() {
 	
 function doSweep() {
 	console.log("Sweeping...");
-}		
+}
+
+function doCapture() {
+	console.log("Capturing...");
+	console.log("Performing analysis...");
+	
+	var cvs = $(".widget-scene-canvas");
+	var data = cvs[cvs.length - 1];
+	
+	$("#analysis").append('<div class="loader">Processing...</div>');
+	
+	$.ajax({
+		url: "/storeimage",
+		type: "POST",
+		contentType: "application/base64",
+		data: data.toDataURL(),
+		success: function(result) {
+			console.log("Image store requested successful");
+			processedData = result.data;
+			if ($("#processed")) {
+				$("#processed").remove();
+			}
+			$("#results").append('<img id="processed"></img>');
+			$("#processed").attr("src", "data:image/jpeg;base64," + processedData);
+			
+			$(".loader").remove();
+		},
+		error: function(err) {
+			console.log("Image save failed.");
+			if ($("#processed")) {
+				$("#processed").remove();
+			}
+			if ($("#object_table"))
+				$("#object_table").remove();
+			
+			$("#objects").append('<span id="object_table">Image processing failed</span>');
+			$(".loader").remove();
+		}
+	})
+}
 
 function init() {	
 	var el = document.getElementById("analyse");
@@ -384,6 +469,12 @@ function init() {
 		el.addEventListener("click", doSweep, false);
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doSweep);
+	
+	var el = document.getElementById("capture");
+	if (el.addEventListener)
+		el.addEventListener("click", doCapture, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doCapture);
 	
 	$.ajax({
 		url : "/gettileapikey",
@@ -458,6 +549,27 @@ function setupMap() {
 			source: markerSource,
 			style: defaultStyle
 		});
+		
+		poleSource = new ol.source.Vector({wrapX: false});
+		
+		var poles = new ol.layer.Vector({
+			source: poleSource,
+			style: defaultStyle
+		});
+		
+		txSource = new ol.source.Vector({wrapX: false});
+		
+		var txs = new ol.layer.Vector({
+			source: txSource,
+			style: defaultStyle
+		});
+		
+		rustyTxSource = new ol.source.Vector({wrapX: false});
+		
+		var rustyTxs = new ol.layer.Vector({
+			source:rustyTxSource,
+			style: defaultStyle
+		});
 
 		view = new ol.View({
 					center : [0, 0],
@@ -468,7 +580,10 @@ function setupMap() {
 					new ol.layer.Tile({
 						source : satelliteSource
 					}),
-					vector
+					vector,
+					poles,
+					txs,
+					rustyTxs
 				],
 				controls : ol.control.defaults({
 					attribution : false

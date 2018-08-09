@@ -274,12 +274,78 @@ function base64MimeType(encoded) {
   return result;
 }
 
+app.post('/storeimage', function (req, res) {
+  
+	var mt = base64MimeType(req.body);  
+	var filename;
+	var d = new Date();
+	var fnPrefix = (d.getTime() / 1000).toString();
+  
+	switch(mt) {
+		case 'image/png':
+			filename = fnPrefix + ".png";
+			break;
+		case 'image/jpeg':
+			filename = fnPrefix + ".jpeg";
+			break;
+		default:
+			break;
+	}
+  
+	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
+	var buf = new Buffer(data, 'base64');
+  
+	var fullFilename = "Custom-Object-Detection/pole_images/" + filename;
+	
+	fs.writeFile(fullFilename, buf, function(err) {
+		if (err) 
+			res.status(500).end();
+		else {
+			
+			console.log("File " + fullFilename);
+			
+			imagemin([fullFilename], 'images', {
+				plugins: [
+					pngToJpeg({quality: 90})
+				]
+			}).then((files) => {		
+				var newFn = fullFilename.replace("png", "jpg");
+				fs.rename(fullFilename, newFn, function(err) {
+					if ( err ) console.log('ERROR: ' + err);
+					console.log("Renamed " + fullFilename + " to " + newFn + "...stored in Custom-Object-Detection/pole_images.");
+					var result = {};
+					
+					fs.readFile(fullFilename.replace("png", "jpg"), (err, data) => {
+						if (err) {
+							res.status(500).end();
+							return;
+						}
+						else {
+							console.log("Returning jpeg image in base64 encoding...");
+
+							var imgBuf = new Buffer(data);
+							try {
+								var buf = imgBuf.toString('base64');
+							}
+							catch(err) {
+								console.log("Failed to return processed image: " + err);
+								res.status(500).end();
+								return;
+							}
+							result.data = buf;
+							res.writeHead(200, {'Content-Type': 'application/json'});
+							res.end(JSON.stringify(result));
+						}
+					});
+				});
+			});
+		}
+  });
+})
+
 app.post('/saveimage', function (req, res) {
-  //console.log(req.body);
   
-	var mt = base64MimeType(req.body);
-	console.log("Mime type = " + mt);
-  
+	var mt = base64MimeType(req.body);  
 	var filename;
 	var d = new Date();
 	var fnPrefix = (d.getTime() / 1000).toString();
@@ -349,17 +415,19 @@ app.post('/saveimage', function (req, res) {
 							}
 							else {
 								console.log("Returning jpeg image in base64 encoding...");
+
+								var imgBuf = new Buffer(data);
 								try {
-									var imgBuf = new Buffer(data);
 									var buf = imgBuf.toString('base64');
-									result.data = buf;
-									res.writeHead(200, {'Content-Type': 'application/json'});
-									res.end(JSON.stringify(result));
 								}
 								catch(err) {
 									console.log("Failed to return processed image: " + err);
 									res.status(500).end();
+									return;
 								}
+								result.data = buf;
+								res.writeHead(200, {'Content-Type': 'application/json'});
+								res.end(JSON.stringify(result));
 							}
 						});
 					});
