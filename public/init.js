@@ -189,6 +189,9 @@ function getStreetviewMetadata() {
 			console.log(data);
 			streetviewMetadata = data;
 			dfd.resolve();
+		},
+		error: function(err) {
+			dfd.reject(err);
 		}
 	});
 	
@@ -266,61 +269,67 @@ function getHeading() {
 	return streetviewMetadata.heading;
 }
 
-function initPanorama() {
-		console.log("Creating panorama...");
-		panorama = new google.maps.StreetViewPanorama(
-			document.getElementById('street-view'),
-			{
-				pano: getPano()
-			});
-			
-		panorama.addListener('pano_changed', function() {
-			//console.log("Panorama moved");
+function initPanorama(dfd) {
+	console.log("Creating panorama...");
+	panorama = new google.maps.StreetViewPanorama(
+		document.getElementById('street-view'),
+		{
+			pano: getPano()
 		});
 		
-		panorama.addListener('position_changed', function() {
-			var pos = panorama.getPosition();
-			var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
-			//console.log("Panorama position changed: " + pos);
-			view.setCenter(coord);
-			setMarker(coord);
-			heading = panorama.getPov().heading;
+	panorama.addListener('pano_changed', function() {
+		console.log("Streetview: pano_changed");
+		//console.log("Panorama moved");
+	});
+	
+	panorama.addListener('position_changed', function() {
+		console.log("Streetview: position_changed");
+		var pos = panorama.getPosition();
+		var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
+		//console.log("Panorama position changed: " + pos);
+		view.setCenter(coord);
+		setMarker(coord);
+		heading = panorama.getPov().heading;
+	});
+	
+	panorama.addListener('pov_changed', function() {
+		console.log("Streetview: pov_changed");
+		heading = panorama.getPov().heading;
+		// Update marker.
+		var defaultStyle = new ol.style.Style({
+			image: new ol.style.Icon({
+					src: 'location-arrow-outline-filled.png',
+					scale: 0.1,
+					rotation: Math.radians(heading)
+			})
 		});
+		markerFeature.setStyle(defaultStyle);
 		
-		panorama.addListener('pov_changed', function() {
-			heading = panorama.getPov().heading;
-			// Update marker.
-			var defaultStyle = new ol.style.Style({
-				image: new ol.style.Icon({
-						src: 'location-arrow-outline-filled.png',
-						scale: 0.1,
-						rotation: Math.radians(heading)
-				})
-			});
-			markerFeature.setStyle(defaultStyle);
-		});
-		
-		if (typeof heading == "undefined")
-			heading = 0;
+		dfd.resolve();
+	});
+	
+	if (typeof heading == "undefined")
+		heading = 0;
 
-			
-		// Register a provider for the custom panorama.
-		panorama.registerPanoProvider(function(pano) {
-			return getPanoramaData(pano);
-		});
 		
-		panorama.addListener('links_changed', function() {
-		  if (panorama.getPano() === getPano()) {
+	// Register a provider for the custom panorama.
+	panorama.registerPanoProvider(function(pano) {
+		return getPanoramaData(pano);
+	});
+	
+	panorama.addListener('links_changed', function() {
+		console.log("Streetview: links_changed");
+		if (panorama.getPano() === getPano()) {
 			panorama.getLinks().push({
 			  description: makeAddressString(),
 			  heading: getHeading(),
 			  pano: getPano()
 			});
-		  }
-		  else {
-			  //console.log("Panorama ids do not match");
-		  }
-		}); 
+		}
+		else {
+		  //console.log("Panorama ids do not match");
+		}
+	});
 }
 
 function Base64Encode(str, encoding = 'utf-8') {
@@ -328,7 +337,7 @@ function Base64Encode(str, encoding = 'utf-8') {
     return base64js.fromByteArray(bytes);
 }
 
-function doAnalyse() {
+function doAnalyse(evt, dfd) {
 	console.log("Performing analysis...");
 	
 	var cvs = $(".widget-scene-canvas");
@@ -419,6 +428,9 @@ function doAnalyse() {
 			$("#objects").append(tab);
 			
 			$(".loader").remove();
+			
+			if (dfd)
+				dfd.resolve();
 		},
 		error: function(err) {
 			console.log("Image save failed.");
@@ -430,6 +442,9 @@ function doAnalyse() {
 			
 			$("#objects").append('<span id="object_table">Image processing failed</span>');
 			$(".loader").remove();
+			
+			if (dfd)
+				dfd.reject();
 		}
 	})
 }
@@ -530,6 +545,46 @@ function doCapture() {
 	})
 }
 
+function doFollowRoute() {
+	if (typeof currentRoute != "undefined") {
+		console.log("Following route...");
+		
+		var geoJSONFormat = new ol.format.GeoJSON();
+		var line = geoJSONFormat.writeFeature(currentRoute, 
+		{
+				dataProjection: 'EPSG:4326',
+				featureProjection: 'EPSG:3857'
+		});
+		
+		var chunks = turf.lineChunk(JSON.parse(line), 10, {units: 'metres'});
+		var tasks = []
+		
+		for (i = 0; i < chunks.features.length; i++) {
+			var aFeature = chunks.features[i];
+			var lastPoint = aFeature.geometry.coordinates[1];
+			
+			tasks.push(function() {
+				console.log("Executing streetview analysis...");
+				var dfd = $.Deferred();
+				var svPromise = showStreetview(lastPoint);
+				svPromise.then(function() {
+					doAnalyse(null, dfd);
+				});
+				return dfd;
+			});
+		};
+		
+		tasks.reduce(function(cur, next) {
+			return cur.then(next);
+		}, $.Deferred().resolve()).then(function() {
+			console.log("Following complete");
+		});
+	}
+	else {
+		console.log("No route to follow");
+	};
+}
+
 function init() {	
 	var el = document.getElementById("analyse");
 	if (el.addEventListener)
@@ -566,6 +621,12 @@ function init() {
 		el.addEventListener("click", doFindRoute, false);
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doFindRoute);
+	
+	var el = document.getElementById("followroute");
+	if (el.addEventListener)
+		el.addEventListener("click", doFollowRoute, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doFollowRoute);
 	
 	$.ajax({
 		url : "/gettileapikey",
@@ -608,6 +669,40 @@ function setMarker(coord) {
 	markerFeature.setStyle(defaultStyle);
 	
 	markerSource.addFeature(markerFeature);
+}
+
+function showStreetview(latLon) {
+	var dfd = $.Deferred();
+	var coord = ol.proj.transform(latLon, 'EPSG:4326', 'EPSG:3857');     
+	setMarker(coord);
+			
+	var locations = {
+		'locations' : [
+			{
+				'lat' : latLon[1],
+				'lng' : latLon[0]						
+			}
+		],
+		'radius' : 50
+	};
+	
+	$.ajax({
+		url : "/initstreetview?lat=" + latLon[1] + "&lon=" + latLon[0],
+		type : "GET",
+		contentType : "application/json; charset=utf-8",
+		dataType : "json",
+		success : function (data) {
+			console.log("Tile server initialisation succeeded");
+			streetviewMetadata = data;
+			
+			console.log("Pano id = " + streetviewMetadata.panoId + ", lat = " + streetviewMetadata.lat + ", lon = " + streetviewMetadata.lng);
+			console.log("Request coordinates = " + latLon[1] + ", " + latLon[0]);
+			
+			initPanorama(dfd);
+		}
+	});
+	
+	return dfd;
 }
 
 function setupMap() {
@@ -729,33 +824,7 @@ function setupMap() {
 				return;
 			}
 			
-			setMarker(evt.coordinate);
-			
-			var locations = {
-				'locations' : [
-					{
-						'lat' : latLon[1],
-						'lng' : latLon[0]						
-					}
-				],
-				'radius' : 50
-			};
-			
-			$.ajax({
-				url : "/initstreetview?lat=" + latLon[1] + "&lon=" + latLon[0],
-				type : "GET",
-				contentType : "application/json; charset=utf-8",
-				dataType : "json",
-				success : function (data) {
-					console.log("Tile server initialisation succeeded");
-					streetviewMetadata = data;
-					
-					console.log("Pano id = " + streetviewMetadata.panoId + ", lat = " + streetviewMetadata.lat + ", lon = " + streetviewMetadata.lng);
-					console.log("Request coordinates = " + latLon[1] + ", " + latLon[0]);
-					
-					initPanorama();
-				}
-			});
+			showStreetview(latLon);;
 		});  
 
 		function checkSize() {
