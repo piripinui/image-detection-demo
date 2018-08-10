@@ -82,6 +82,48 @@
 			z-index: 999;
 		}
 		
+		#origin {
+			position: absolute;
+			margin-top: 270px;
+			margin-left: 5px;
+			width: 150px;
+			z-index: 999;
+		}
+		
+		#origincoords {
+			position: absolute;
+			margin-top: 270px;
+			margin-left: 200px;
+			width: 500px;
+			z-index: 999;
+			font-family: Arial;
+		}
+		
+		#destination {
+			position: absolute;
+			margin-top: 300px;
+			margin-left: 5px;
+			width: 150px;
+			z-index: 999;
+		}
+		
+		#destcoords {
+			position: absolute;
+			margin-top: 300px;
+			margin-left: 200px;
+			width: 500px;
+			z-index: 999;
+			font-family: Arial;
+		}
+		
+		#findroute {
+			position: absolute;
+			margin-top: 330px;
+			margin-left: 5px;
+			width: 150px;
+			z-index: 999;
+		}
+		
 		#results {
 			position: absolute;
 			margin-left: 60%;
@@ -199,6 +241,11 @@
 			<div id="objects"></div>
 			<button id="sweep" type="button">Press to Sweep...</button>
 			<button id="capture" type="button">Capture Image...</button>
+			<button id="origin" type="button">Set origin</button>
+			<div id="origincoords"></div>
+			<button id="destination" type="button">Set destination</button>
+			<div id="destcoords"></div>
+			<button id="findroute" type="button">Find Route</button>
 		</div>
 		<!--img id="streetview"-->
 	</div>

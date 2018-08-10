@@ -1,5 +1,9 @@
 var sessionToken,
 map,view, markerFeature, markerSource, poleSource, heading,
+routeSource, routeStyle, currentRoute,
+setDestinationMode =false,
+setOriginMode = false,
+originCoord, destCoord,
 styles = {
 	pole: new ol.style.Style({
 			image: new ol.style.Icon({
@@ -434,6 +438,59 @@ function doSweep() {
 	console.log("Sweeping...");
 }
 
+function doSetOrigin() {
+	console.log("Setting origin...");
+	setOriginMode = true;
+}
+
+function setOrigin(coord) {
+	if ($("#origincoordinfo"))
+		$("#origincoordinfo").remove();
+	
+	originCoord = coord;
+	
+	$("#origincoords").append('<span id="origincoordinfo">Lat = ' + coord[1] + ' Lon = ' + coord[0] + '</span>');
+}
+
+function setDestination(coord) {
+	if ($("#destcoordinfo"))
+		$("#destcoordinfo").remove();
+	
+	destCoord = coord;
+	
+	$("#destcoords").append('<span id="destcoordinfo">Lat = ' + coord[1] + ' Lon = ' + coord[0] + '</span>');
+}
+
+function doSetDestination() {
+	console.log("Setting destination...");
+	setDestinationMode = true;
+}
+
+function doFindRoute() {
+	console.log("Finding route...");
+	
+	$.ajax({
+		url: "/getdirections?origin=" + originCoord[1] + "," + originCoord[0] + "&destination=" + destCoord[1] + "," + destCoord[0],
+		type: "GET",
+		success: function(result) {
+			console.log("Directions request succeeded: " + result);
+			
+			var geojsonFormat = new ol.format.GeoJSON();
+			
+			if (typeof currentRoute != "undefined")
+				routeSource.removeFeature(currentRoute);
+			
+			currentRoute = geojsonFormat.readFeature(result, 
+			{
+				dataProjection: 'EPSG:4326',
+				featureProjection: 'EPSG:3857'
+			});
+			
+			routeSource.addFeature(currentRoute);
+		}
+	})
+}
+
 function doCapture() {
 	console.log("Capturing...");
 	console.log("Performing analysis...");
@@ -492,6 +549,24 @@ function init() {
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doCapture);
 	
+	var el = document.getElementById("origin");
+	if (el.addEventListener)
+		el.addEventListener("click", doSetOrigin, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doSetOrigin);
+	
+	var el = document.getElementById("destination");
+	if (el.addEventListener)
+		el.addEventListener("click", doSetDestination, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doSetDestination);
+	
+	var el = document.getElementById("findroute");
+	if (el.addEventListener)
+		el.addEventListener("click", doFindRoute, false);
+	else if (el.attachEvent)
+		el.attachEvent('onclick', doFindRoute);
+	
 	$.ajax({
 		url : "/gettileapikey",
 		type : "GET",
@@ -507,7 +582,6 @@ function init() {
 				success : function (data) {
 					console.log("Maps API key request succeeded");
 					googleMapsApiKey = data;
-			
 					var s = document.createElement("script");
 					s.type = "text/javascript";
 					s.src = "https://maps.googleapis.com/maps/api/js?key=" + googleMapsApiKey;
@@ -586,6 +660,20 @@ function setupMap() {
 			source:rustyTxSource,
 			style: defaultStyle
 		});
+		
+		routeSource = new ol.source.Vector({wrapX: false});
+		
+		routeStyle = new ol.style.Style({
+			stroke: new ol.style.Stroke({
+			  color: [64, 200, 200, 0.5],
+			  width: 5
+			})
+		});
+		
+		var routes = new ol.layer.Vector({
+			source:	routeSource,
+			style: 	routeStyle
+		});
 
 		view = new ol.View({
 					center : [0, 0],
@@ -599,7 +687,8 @@ function setupMap() {
 					vector,
 					poles,
 					txs,
-					rustyTxs
+					rustyTxs,
+					routes
 				],
 				controls : ol.control.defaults({
 					attribution : false
@@ -627,6 +716,18 @@ function setupMap() {
 		map.on('singleclick', function(evt) {      
             var latLon = ol.proj.transform(evt.coordinate, 'EPSG:3857', 'EPSG:4326');                                           
 			console.log("Click event: " + latLon[0] + ", " + latLon[1]);	
+			
+			if (setOriginMode) {
+				setOrigin(latLon);
+				setOriginMode = false;
+				return;
+			}
+			
+			if (setDestinationMode) {
+				setDestination(latLon);
+				setDestinationMode = false;
+				return;
+			}
 			
 			setMarker(evt.coordinate);
 			
