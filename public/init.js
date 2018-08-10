@@ -389,6 +389,22 @@ function doAnalyse() {
 	
 						txSource.addFeature(txFeature);
 						break;
+					case 'rusty_tx':
+						var gCoord= panorama.getPosition();
+						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
+						txFeature = new ol.Feature(new ol.geom.Point(coord));
+						
+						var txStyle = new ol.style.Style({
+							image: new ol.style.Icon({
+									src: 'rusty_tx_arrow.png',
+									scale: 0.05,
+									rotation: Math.radians(panorama.getPov().heading)
+							})
+						});
+						txFeature.setStyle(txStyle);
+	
+						txSource.addFeature(txFeature);
+						break;
 					default:
 						break;
 				}
