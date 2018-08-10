@@ -5,7 +5,7 @@ fs = require('fs'),
 urlPattern = require('url-pattern'),
 helmet = require('helmet'),
 sessionToken,
-tileApiKey,
+mapsApiKey, tileApiKey, directionsApiKey,
 streetviewSessionToken, streetviewPanos, streetviewMetadata,
 Promise = require('promise'),
 path = require('path'),
@@ -13,7 +13,8 @@ shell = require('shelljs'),
 bodyParser = require('body-parser'),
 imagemin = require('imagemin'),
 pngToJpeg = require('png-to-jpeg'),
-cp = require('child_process');;
+cp = require('child_process'),
+polyline = require( 'google-polyline');
 
 var resultDir = process.cwd() + "\\data";
 
@@ -253,6 +254,65 @@ app.get('/getmapsapikey', function(req, res) {
 	res.status(200).end();
 });
 
+app.get('/getdirectionsapikey', function(req, res) {
+	console.log("Got Directions API key request: " + req.url);
+
+	res.send(directionsApiKey);
+	res.status(200).end();
+});
+
+app.get('/getdirections', function(req, res) {
+	console.log("Got Directions request: " + req.url);
+	
+	var pattern = new urlPattern(
+		/\/getdirections\?origin=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)\&destination=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)/,
+		['originLat', 'originLon', 'destLat', 'destLon']
+	);
+	
+	pattern.isRegex = true;
+		
+	var results = pattern.match(req.url);
+	
+	if (results) {
+		request({
+			uri: "https://maps.googleapis.com/maps/api/directions/json?origin=" + results.originLat + "," + results.originLon + "&destination=" + results.destLat + "," + results.destLon + "&key=" + directionsApiKey,
+			method: "GET",
+			json: true
+		},
+		function (err, resp, data) {
+			if (err) {
+				console.log("error " + err);
+				res.status(500).end();
+			}
+			else {
+				console.log("Directions request succeeded");
+				var coords = polyline.decode(data.routes[0].overview_polyline.points);
+				var txCoords = [];
+				
+				for (i = 0; i < coords.length; i++) {
+					txCoords.push([coords[i][1], coords[i][0]]);
+				}
+				
+				var overviewLine = {
+					type: "Feature",
+					properties: {},
+					geometry: {
+						type: "LineString",
+						coordinates: txCoords
+					}
+				};
+				
+				res.writeHead(200, {'Content-Type': 'application/json'});
+				res.end(JSON.stringify(overviewLine));
+			}
+		});
+	}
+	else {
+		console.log("Bad directions request");
+		res.status(500).end();
+	}
+});
+
 app.use(bodyParser.text({
 	type: "application/base64",
 	limit: "5MB"
@@ -451,6 +511,11 @@ function initialise() {
 		if (err) throw err;
 		
 		mapsApiKey = data;
+	});
+	fs.readFile("public/directions_api_key.txt", function(err, data) {
+		if (err) throw err;
+		
+		directionsApiKey = data;
 	});
 };
 
