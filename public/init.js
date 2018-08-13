@@ -1,6 +1,6 @@
 var sessionToken,
 map,view, markerFeature, markerSource, poleSource, heading,
-routeSource, routeStyle, currentRoute,
+routeSource, routeStyle, currentRoute, followBearing,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord,
@@ -266,15 +266,22 @@ function getPano() {
 }
 
 function getHeading() {
+	console.log("Returning SV heading of " + streetviewMetadata.heading);
+	if (streetviewMetadata.heading < 0)
+		streetviewMetadata.heading = 360 + streetviewMetadata.heading;
 	return streetviewMetadata.heading;
 }
 
 function initPanorama(dfd) {
-	console.log("Creating panorama...");
+	//console.log("Creating panorama...");
 	panorama = new google.maps.StreetViewPanorama(
 		document.getElementById('street-view'),
 		{
-			pano: getPano()
+			pano: getPano(),
+			pov: {
+				heading: getHeading(),
+				pitch: 0
+			}
 		});
 		
 	panorama.addListener('pano_changed', function() {
@@ -283,7 +290,7 @@ function initPanorama(dfd) {
 	});
 	
 	panorama.addListener('position_changed', function() {
-		console.log("Streetview: position_changed");
+		//console.log("Streetview: position_changed");
 		var pos = panorama.getPosition();
 		var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
 		//console.log("Panorama position changed: " + pos);
@@ -293,7 +300,7 @@ function initPanorama(dfd) {
 	});
 	
 	panorama.addListener('pov_changed', function() {
-		console.log("Streetview: pov_changed");
+		//console.log("Streetview: pov_changed");
 		heading = panorama.getPov().heading;
 		// Update marker.
 		var defaultStyle = new ol.style.Style({
@@ -304,7 +311,6 @@ function initPanorama(dfd) {
 			})
 		});
 		markerFeature.setStyle(defaultStyle);
-		
 		dfd.resolve();
 	});
 	
@@ -318,7 +324,7 @@ function initPanorama(dfd) {
 	});
 	
 	panorama.addListener('links_changed', function() {
-		console.log("Streetview: links_changed");
+		//console.log("Streetview: links_changed");
 		if (panorama.getPano() === getPano()) {
 			panorama.getLinks().push({
 			  description: makeAddressString(),
@@ -337,8 +343,14 @@ function Base64Encode(str, encoding = 'utf-8') {
     return base64js.fromByteArray(bytes);
 }
 
-function doAnalyse(evt, dfd) {
-	console.log("Performing analysis...");
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function doAnalyse(evt, dfd) {
+	//console.log("Performing analysis...");
+	
+	await sleep(500);
 	
 	var cvs = $(".widget-scene-canvas");
 	var data = cvs[cvs.length - 1];
@@ -377,14 +389,30 @@ function doAnalyse(evt, dfd) {
 						
 						var poleStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'location-arrow-outline-filled.png',
-									scale: 0.1,
+									src: 'pole_circle.png',
+									scale: 0.005,
 									rotation: Math.radians(panorama.getPov().heading)
 							})
 						});
 						poleFeature.setStyle(poleStyle);
 	
 						poleSource.addFeature(poleFeature);
+						break;
+					case 'streetlight': 
+						var gCoord= panorama.getPosition();
+						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
+						slFeature = new ol.Feature(new ol.geom.Point(coord));
+						
+						var slStyle = new ol.style.Style({
+							image: new ol.style.Icon({
+									src: 'streetlight.png',
+									scale: 0.005,
+									rotation: Math.radians(panorama.getPov().heading)
+							})
+						});
+						slFeature.setStyle(slStyle);
+	
+						slSource.addFeature(slFeature);
 						break;
 					case 'transformer':
 						var gCoord= panorama.getPosition();
@@ -559,19 +587,33 @@ function doFollowRoute() {
 		var chunks = turf.lineChunk(JSON.parse(line), 10, {units: 'metres'});
 		var tasks = []
 		
-		for (i = 0; i < chunks.features.length; i++) {
-			var aFeature = chunks.features[i];
-			var lastPoint = aFeature.geometry.coordinates[1];
-			
+		function createTask(coord, bearing) {
 			tasks.push(function() {
-				console.log("Executing streetview analysis...");
+				console.log("Executing streetview analysis with bearing = " + bearing);
 				var dfd = $.Deferred();
-				var svPromise = showStreetview(lastPoint);
+				
+				followBearing = bearing;
+				
+				var svPromise = showStreetview(coord);
+				
 				svPromise.then(function() {
 					doAnalyse(null, dfd);
 				});
 				return dfd;
 			});
+		};
+		
+		for (i = 0; i < chunks.features.length; i++) {
+			var aFeature = chunks.features[i];
+			var firstPoint = aFeature.geometry.coordinates[0];
+			var lastPoint = aFeature.geometry.coordinates[1];
+			var bearing = turf.bearing(firstPoint, lastPoint);
+			
+			if (i == 0) {
+				createTask(firstPoint, bearing);
+			}
+			
+			createTask(lastPoint, bearing);
 		};
 		
 		tasks.reduce(function(cur, next) {
@@ -695,9 +737,14 @@ function showStreetview(latLon) {
 			console.log("Tile server initialisation succeeded");
 			streetviewMetadata = data;
 			
+			if (followBearing) {
+				streetviewMetadata.heading = followBearing;
+				followBearing = null;
+			}
+			
 			console.log("Pano id = " + streetviewMetadata.panoId + ", lat = " + streetviewMetadata.lat + ", lon = " + streetviewMetadata.lng);
 			console.log("Request coordinates = " + latLon[1] + ", " + latLon[0]);
-			
+
 			initPanorama(dfd);
 		}
 	});
@@ -749,6 +796,13 @@ function setupMap() {
 			style: defaultStyle
 		});
 		
+		slSource = new ol.source.Vector({wrapX: false});
+		
+		var streetlights = new ol.layer.Vector({
+			source: slSource,
+			style: defaultStyle
+		});
+		
 		rustyTxSource = new ol.source.Vector({wrapX: false});
 		
 		var rustyTxs = new ol.layer.Vector({
@@ -783,7 +837,8 @@ function setupMap() {
 					poles,
 					txs,
 					rustyTxs,
-					routes
+					routes,
+					streetlights
 				],
 				controls : ol.control.defaults({
 					attribution : false
@@ -824,7 +879,10 @@ function setupMap() {
 				return;
 			}
 			
-			showStreetview(latLon);;
+			var aPromise = showStreetview(latLon);
+			aPromise.then(function() {
+				console.log("Streetview display complete");
+			});
 		});  
 
 		function checkSize() {

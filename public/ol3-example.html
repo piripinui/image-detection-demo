@@ -10,6 +10,7 @@
 	<script src="jquery-3.3.1.min.js"></script>
 	<script src="init.js"></script>
 	<script src="base64js.min.js"></script>
+	<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 	<style>
 		#panel {
 			width: 100%; 
@@ -119,6 +120,14 @@
 		#findroute {
 			position: absolute;
 			margin-top: 330px;
+			margin-left: 5px;
+			width: 150px;
+			z-index: 999;
+		}
+		
+		#followroute {
+			position: absolute;
+			margin-top: 360px;
 			margin-left: 5px;
 			width: 150px;
 			z-index: 999;
@@ -246,6 +255,7 @@
 			<button id="destination" type="button">Set destination</button>
 			<div id="destcoords"></div>
 			<button id="findroute" type="button">Find Route</button>
+			<button id="followroute" type="button">Follow Route</button>
 		</div>
 		<!--img id="streetview"-->
 	</div>
