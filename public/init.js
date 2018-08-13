@@ -406,7 +406,7 @@ async function doAnalyse(evt, dfd) {
 						var slStyle = new ol.style.Style({
 							image: new ol.style.Icon({
 									src: 'streetlight.png',
-									scale: 0.005,
+									scale: 0.01,
 									rotation: Math.radians(panorama.getPov().heading)
 							})
 						});
@@ -814,7 +814,7 @@ function setupMap() {
 		
 		routeStyle = new ol.style.Style({
 			stroke: new ol.style.Stroke({
-			  color: [64, 200, 200, 0.5],
+			  color: "#ff0000",
 			  width: 5
 			})
 		});
@@ -833,11 +833,11 @@ function setupMap() {
 					new ol.layer.Tile({
 						source : satelliteSource
 					}),
+					routes,
 					vector,
 					poles,
 					txs,
 					rustyTxs,
-					routes,
 					streetlights
 				],
 				controls : ol.control.defaults({
