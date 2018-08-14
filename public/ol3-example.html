@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Google Map Tile API Example</title>
-    <link rel="stylesheet" href="https://openlayers.org/en/v5.1.3/css/ol.css" type="text/css">
+    <link rel="stylesheet" href="ol.css" type="text/css">
 	<link rel="stylesheet" href="spinner.css" type="text/css">
     <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
     <script src="http://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
@@ -12,6 +12,10 @@
 	<script src="base64js.min.js"></script>
 	<script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
 	<style>
+		body {
+			margin: 0px;
+		}
+		
 		#panel {
 			width: 100%; 
 			height: 100%;
@@ -230,10 +234,6 @@
 			
 			<button id="followroute" type="button">Follow Route</button>
 		</div>
-		<!--img id="streetview"-->
 	</div>
-	<!--script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBLuDjuOT1BGJ3D5QqSKKVxk932woOSvR4&callback=initializeStreetview">
-    </script-->
   </body>
 </html>
