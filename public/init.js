@@ -496,6 +496,7 @@ function doSweep() {
 
 function doSetRoute() {
 	console.log("Setting route...");
+	map.getTarget().style.cursor = 'pointer';
 	setOriginMode = true;
 	setDestinationMode = true;
 }
@@ -832,7 +833,7 @@ function setupMap() {
 				controls : ol.control.defaults({
 					attribution : false
 				}).extend([attribution]),
-				target : 'map',
+				target : document.getElementById('map'),
 				view : view
 			});
 			
@@ -867,6 +868,8 @@ function setupMap() {
 				setDestinationMode = false;
 				
 				setRoute(originCoord, destCoord);
+				
+				map.getTarget().style.cursor = '';
 				
 				doFindRoute();
 				
