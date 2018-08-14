@@ -88,11 +88,13 @@ with detection_graph.as_default():
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 		
+sess = tf.Session(graph=detection_graph)
 def startDetection():
+    global sess
     print('Detecting...')
     
     with detection_graph.as_default():
-        with tf.Session(graph=detection_graph) as sess:
+        #with tf.Session(graph=detection_graph) as sess:
             t0 = time.time()
             image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
             detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
