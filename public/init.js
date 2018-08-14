@@ -481,32 +481,20 @@ function doSweep() {
 	console.log("Sweeping...");
 }
 
-function doSetOrigin() {
-	console.log("Setting origin...");
+function doSetRoute() {
+	console.log("Setting route...");
 	setOriginMode = true;
-}
-
-function setOrigin(coord) {
-	if ($("#origincoordinfo"))
-		$("#origincoordinfo").remove();
-	
-	originCoord = coord;
-	
-	$("#origincoords").append('<span id="origincoordinfo">Lat = ' + coord[1] + ' Lon = ' + coord[0] + '</span>');
-}
-
-function setDestination(coord) {
-	if ($("#destcoordinfo"))
-		$("#destcoordinfo").remove();
-	
-	destCoord = coord;
-	
-	$("#destcoords").append('<span id="destcoordinfo">Lat = ' + coord[1] + ' Lon = ' + coord[0] + '</span>');
-}
-
-function doSetDestination() {
-	console.log("Setting destination...");
 	setDestinationMode = true;
+}
+
+function setRoute(startCoord, endCoord) {
+	if ($("#routecoordinfo"))
+		$("#routecoordinfo").remove();
+	
+	originCoord = startCoord;
+	destCoord = endCoord;
+	
+	$("#routecoords").append('<span id="routecoordinfo">Route: ' + startCoord[1].toFixed(2) + ', ' + startCoord[0].toFixed(2) + ':' + endCoord[1].toFixed(2) + ', ' + endCoord[0].toFixed(2) + '</span>');
 }
 
 function doFindRoute() {
@@ -646,23 +634,11 @@ function init() {
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doCapture);
 	
-	var el = document.getElementById("origin");
+	var el = document.getElementById("setroute");
 	if (el.addEventListener)
-		el.addEventListener("click", doSetOrigin, false);
+		el.addEventListener("click", doSetRoute, false);
 	else if (el.attachEvent)
-		el.attachEvent('onclick', doSetOrigin);
-	
-	var el = document.getElementById("destination");
-	if (el.addEventListener)
-		el.addEventListener("click", doSetDestination, false);
-	else if (el.attachEvent)
-		el.attachEvent('onclick', doSetDestination);
-	
-	var el = document.getElementById("findroute");
-	if (el.addEventListener)
-		el.addEventListener("click", doFindRoute, false);
-	else if (el.attachEvent)
-		el.attachEvent('onclick', doFindRoute);
+		el.attachEvent('onclick', doSetRoute);
 	
 	var el = document.getElementById("followroute");
 	if (el.addEventListener)
@@ -868,14 +844,19 @@ function setupMap() {
 			console.log("Click event: " + latLon[0] + ", " + latLon[1]);	
 			
 			if (setOriginMode) {
-				setOrigin(latLon);
+				originCoord = latLon;
 				setOriginMode = false;
 				return;
 			}
 			
 			if (setDestinationMode) {
-				setDestination(latLon);
+				destCoord = latLon;
 				setDestinationMode = false;
+				
+				setRoute(originCoord, destCoord);
+				
+				doFindRoute();
+				
 				return;
 			}
 			
