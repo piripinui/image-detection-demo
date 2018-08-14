@@ -455,11 +455,18 @@ app.post('/saveimage', function (req, res) {
 						method: "GET"
 					},
 					function (err, resp, data) {
-						// Delete the captured file.
-						fs.unlink(newFn, (err) => {
-							if (err) throw err;
-							console.log(newFn + ' was deleted');
-						});
+						// Delete the captured file
+						try {
+							fs.unlink(newFn, (err) => {
+								if (err) throw err;
+								console.log(newFn + ' was deleted');
+							});
+						}
+						catch(err) {
+							console.log("Problem deleting " + newFn);
+							res.status(500).end();
+							return;
+						}
 						
 						if (err) {
 							// node couldn't execute the command
