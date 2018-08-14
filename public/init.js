@@ -376,7 +376,7 @@ async function doAnalyse(evt, dfd) {
 		contentType: "application/base64",
 		data: data.toDataURL(),
 		success: function(result) {
-			console.log("Image save requested successful (elapsed time = " + result.elapsed_time + ")");
+			console.log("Image analysis request successful (elapsed time = " + result.elapsed_time + ")");
 			processedData = result.data;
 			if ($("#processed")) {
 				$("#processed").remove();
