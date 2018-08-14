@@ -14,7 +14,13 @@ bodyParser = require('body-parser'),
 imagemin = require('imagemin'),
 pngToJpeg = require('png-to-jpeg'),
 cp = require('child_process'),
-polyline = require( 'google-polyline');
+polyline = require( 'google-polyline'),
+imageDir = process.argv[2];
+
+if (!imageDir)
+	imageDir = "images";
+
+console.log("Writing images to " + imageDir);
 
 var resultDir = process.cwd() + "\\data";
 
@@ -424,14 +430,14 @@ app.post('/saveimage', function (req, res) {
 	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
 	var buf = new Buffer(data, 'base64');
   
-	fs.writeFile("images/" + filename, buf, function(err) {
+	fs.writeFile(imageDir + filename, buf, function(err) {
 		if (err) 
 			res.status(500).end();
 		else {
-			var fullFilename = "images/" + filename;
+			var fullFilename = imageDir + filename;
 			console.log("File " + fullFilename);
 			
-			imagemin([fullFilename], 'images', {
+			imagemin([fullFilename], imageDir, {
 				plugins: [
 					pngToJpeg({quality: 90})
 				]
@@ -468,7 +474,7 @@ app.post('/saveimage', function (req, res) {
 						
 						// Return the processed image to the requestor.
 					  
-						fs.readFile('images/processed/' + filename.replace("png", "jpg"), (err, data) => {
+						fs.readFile(imageDir + 'processed/' + filename.replace("png", "jpg"), (err, data) => {
 							if (err) {
 								res.status(500).end();
 								return;

@@ -29,7 +29,9 @@ MAX_NUMBER_OF_BOXES = 10
 MINIMUM_CONFIDENCE = 0.9
 
 PATH_TO_LABELS = 'pole_annotations/label_map.pbtxt'
-PATH_TO_TEST_IMAGES_DIR = '../images'
+PATH_TO_TEST_IMAGES_DIR = sys.argv[2];
+
+print("Image directory = " + PATH_TO_TEST_IMAGES_DIR);
 
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=sys.maxsize, use_display_name=True)
@@ -73,7 +75,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
     #plt.imshow(image_np, aspect = 'auto')
     plt.imshow(image_np)
     path, file = os.path.split(image_path)
-    plt.savefig('../images/processed/' + file, dpi = 62)
+    plt.savefig(PATH_TO_TEST_IMAGES_DIR + '/processed/' + file, dpi = 62)
     plt.close(fig)
 
 # Load model into memory
@@ -159,7 +161,7 @@ class startdetection:
 		
         results += getClasses(CATEGORY_INDEX)
 		
-        results += "]}"		
+        results += "],\"elapsed_time\":" + str(total) + "}"		
 		
         return str(results)
 				

@@ -6,9 +6,9 @@ The map client is defined in the public directory. It is a basic Openlayers clie
 
 The app's server is defined in `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
 
-`node server.js`
+`node server.js /foo/bar/images/`
 
-By default this server runs on port 3100.
+By default this server runs on port 3100. The command line parameter shown in the example above defines the directory the server will write image files to.
 
 The client is in the `public` directory. To start it, type the following into a Chrome browser:
 
@@ -20,12 +20,13 @@ The image recognition is based on a Tensorflow image recognition example you can
 https://github.com/bourdakos1/Custom-Object-Detection
 
 Some modifications to this example have been done to specifically detect poles, transformers and streetlights. These can be found in the `Custom-Object-Detection` directory. These should be overlaid over a clone of the repo above.
-The main file is in a subdirectory called `object_detection` and is called `google_pole_object_detection_runner.py`. This is the script that should be run and when running it creates a web service that will process image files in a directory called `images` below the root directory. It will create new images labelled with detected equipment in `images/processed`.
-To run the script execute a command line like this
+The main file is in a subdirectory called `object_detection` and is called `google_pole_object_detection_runner.py`. This is the script that should be run and when running it creates a web service that will process image files in a directory called specified by the second command line parameter (see example below). It will create new images labelled with detected equipment in a subdirectory called `/processed` below the nominated directory.
 
-`python object_detection/google_pole_object_detection_runner.py 3200`
+For example, to run the script execute a command line like this
 
-The last parameter defines the port number the service will run on.
+`python object_detection/google_pole_object_detection_runner.py 3200 /foo/bar/images`
+
+The first parameter defines the port number the service will run on. The last parameter defines the directory from which the Tensorflow script should read images from. This directory should match the directory the server writes to (see above).
 ## Installation
 For the image recognition services, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths:
 
