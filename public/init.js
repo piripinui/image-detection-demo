@@ -3,7 +3,7 @@ map,view, markerFeature, markerSource, poleSource, heading,
 routeSource, routeStyle, currentRoute, followBearing,
 setDestinationMode =false,
 setOriginMode = false,
-originCoord, destCoord,
+originCoord, destCoord, startFeature, endFeature,
 styles = {
 	pole: new ol.style.Style({
 			image: new ol.style.Icon({
@@ -858,14 +858,47 @@ function setupMap() {
 			//console.log("Click event: " + latLon[0] + ", " + latLon[1]);	
 			
 			if (setOriginMode) {
-				originCoord = latLon;
+				originCoord = latLon
+				var coord = evt.coordinate;
+				
+				if (startFeature)
+					routeSource.removeFeature(startFeature);
+				
+				startFeature = new ol.Feature(new ol.geom.Point(coord));
+				
+				var startStyle = new ol.style.Style({
+					image: new ol.style.Icon({
+							src: 'route_icon.png',
+							scale: 0.02
+					})
+				});
+				startFeature.setStyle(startStyle);
+
+				routeSource.addFeature(startFeature);
+				
 				setOriginMode = false;
 				return;
 			}
 			
 			if (setDestinationMode) {
+				var coord = evt.coordinate;
 				destCoord = latLon;
 				setDestinationMode = false;
+				
+				if (endFeature)
+					routeSource.removeFeature(endFeature);
+				
+				endFeature = new ol.Feature(new ol.geom.Point(coord));
+				
+				var endStyle = new ol.style.Style({
+					image: new ol.style.Icon({
+							src: 'route_icon.png',
+							scale: 0.02
+					})
+				});
+				endFeature.setStyle(endStyle);
+
+				routeSource.addFeature(endFeature);
 				
 				setRoute(originCoord, destCoord);
 				
