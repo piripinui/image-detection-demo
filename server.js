@@ -48,25 +48,25 @@ function getSession(options, maptype) {
 				if (err)
 					reject(err);
 				else {
-					console.log("Session token request succeeded");
+					//console.log("Session token request succeeded");
 					var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
 
 					switch (maptype) {
 						case 'satellite': {
 								satelliteSessionToken = data.session;
-								console.log("Satellite session: " + satelliteSessionToken);
+								//console.log("Satellite session: " + satelliteSessionToken);
 								d.setUTCSeconds(data.expiry);
 								console.log("Satellite session expiry: " + data.expiry +" (" + d + ")")
 								break;
 							}
 						case 'roadmap': {
 								roadSessionToken = data.session;
-								console.log("Road session: " + roadSessionToken);
+								//console.log("Road session: " + roadSessionToken);
 								break;
 							}
 						case 'streetview': {
 								streetviewSessionToken = data.session;
-								console.log("Streetview session: " + streetviewSessionToken);
+								//console.log("Streetview session: " + streetviewSessionToken);
 							}
 					}
 					resolve(res);
@@ -93,8 +93,8 @@ function getPanoId(locations) {
 			if (err) 
 				reject(err);
 			else {
-				console.log("Streetview pano id request succeeded: " + err);
-				console.log(data);
+				//console.log("Streetview pano id request succeeded: " + err);
+				//console.log(data);
 				streetviewPanos = data;
 				resolve(res);
 			}
@@ -117,7 +117,7 @@ function getStreetviewMetadata() {
 				reject(err);
 			}
 			else {
-				console.log("Streetview metadata request succeeded");
+				//console.log("Streetview metadata request succeeded");
 				//console.log(data);
 				streetviewMetadata = data;
 				resolve(res);
@@ -141,7 +141,7 @@ function initialiseStreetview(req, res, results) {
 		'radius' : 50
 	};
 	
-	console.log(locations);
+	//console.log(locations);
 	
 	var panoPromise = getPanoId(locations);
 	
@@ -186,7 +186,7 @@ app.get('/initstreetview*', function (req, res) {
 	
 	initialiseStreetview(req, res, results)
 	.then(function() {
-		console.log("Returning init response - " + streetviewMetadata.panoId);
+		//console.log("Returning init response - " + streetviewMetadata.panoId);
 		res.send(streetviewMetadata)
 		res.status(200).end();
 	});
@@ -200,21 +200,21 @@ app.get('/gettileapikey', function(req, res) {
 });
 
 app.get('/getmapsapikey', function(req, res) {
-	console.log("Got Maps API key request: " + req.url);
+	//console.log("Got Maps API key request: " + req.url);
 
 	res.send(mapsApiKey);
 	res.status(200).end();
 });
 
 app.get('/getdirectionsapikey', function(req, res) {
-	console.log("Got Directions API key request: " + req.url);
+	//console.log("Got Directions API key request: " + req.url);
 
 	res.send(directionsApiKey);
 	res.status(200).end();
 });
 
 app.get('/getdirections', function(req, res) {
-	console.log("Got Directions request: " + req.url);
+	//console.log("Got Directions request: " + req.url);
 	
 	var pattern = new urlPattern(
 		/\/getdirections\?origin=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)\&destination=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)/,
@@ -237,7 +237,7 @@ app.get('/getdirections', function(req, res) {
 				res.status(500).end();
 			}
 			else {
-				console.log("Directions request succeeded");
+				//console.log("Directions request succeeded");
 				var coords = polyline.decode(data.routes[0].overview_polyline.points);
 				var txCoords = [];
 				
@@ -314,7 +314,7 @@ app.post('/storeimage', function (req, res) {
 			res.status(500).end();
 		else {
 			
-			console.log("File " + fullFilename);
+			//console.log("File " + fullFilename);
 			
 			imagemin([fullFilename], 'images', {
 				plugins: [
@@ -400,59 +400,59 @@ app.post('/saveimage', function (req, res) {
 						uri: "http://localhost:3200/startdetection",
 						method: "GET"
 					},
-					function (err, resp, data) {
+					function (detectionErr, resp, data) {
 						// Delete the captured file
-						try {
-							fs.unlink(newFn, (err) => {
-								if (err) throw err;
+						fs.unlink(newFn, (unlinkErr) => {
+							try {
+								if (unlinkErr) throw unlinkErr;
 								console.log(newFn + ' was deleted');
-							});
-						}
-						catch(err) {
-							console.log("Problem deleting " + newFn);
-							res.status(500).end();
-							return;
-						}
-						
-						if (err) {
-							// node couldn't execute the command
-							console.log("Problem running process_imagery: " + err);
-							res.status(500).end();
-							return;
-						}
-						
-						if (resp.statusCode >= 500 && resp.statusCode < 600) {
-							console.log("Got error for detection server: " + resp.statusCode);
-							res.status(resp.statusCode).end();
-							return;
-						}
-						
-						console.log("Start detection request succeeded..." + data);
-						
-						result = JSON.parse(data);
-						
-						// Return the processed image to the requestor.
-					  
-						fs.readFile(imageDir + 'processed/' + filename.replace("png", "jpg"), (err, data) => {
-							if (err) {
-								res.status(500).end();
-								return;
-							}
-							else {
-								console.log("Returning jpeg image in base64 encoding...");
-
-								var imgBuf = new Buffer(data);
-								try {
-									var buf = imgBuf.toString('base64');
-								}
-								catch(err) {
-									console.log("Failed to return processed image: " + err);
+								
+								if (detectionErr) {
+									// node couldn't execute the command
+									console.log("Problem running process_imagery: " + detectionErr);
 									res.status(500).end();
 									return;
 								}
-								result.data = buf;
-								res.writeHead(200, {'Content-Type': 'application/json'});
-								res.end(JSON.stringify(result));
+								
+								if (resp.statusCode >= 500 && resp.statusCode < 600) {
+									console.log("Got error for detection server: " + resp.statusCode);
+									res.status(resp.statusCode).end();
+									return;
+								}
+								
+								console.log("Start detection request succeeded..." + data);
+								
+								result = JSON.parse(data);
+								
+								// Return the processed image to the requestor.
+							  
+								fs.readFile(imageDir + 'processed/' + filename.replace("png", "jpg"), (err, data) => {
+									if (err) {
+										res.status(500).end();
+										return;
+									}
+									else {
+										//console.log("Returning jpeg image in base64 encoding...");
+
+										var imgBuf = new Buffer(data);
+										try {
+											var buf = imgBuf.toString('base64');
+										}
+										catch(err) {
+											console.log("Failed to return processed image: " + err);
+											res.status(500).end();
+											return;
+										}
+										result.data = buf;
+										res.writeHead(200, {'Content-Type': 'application/json'});
+										res.end(JSON.stringify(result));
+									}
+								});
+							}
+							catch(err) {
+								console.log("Problem deleting " + newFn);
+								res.status(500).end();
+								return;
 							}
 						});
 					});
