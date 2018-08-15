@@ -840,11 +840,11 @@ function setupMap() {
 						source : satelliteSource
 					}),
 					routes,
-					vector,
 					poles,
 					txs,
 					rustyTxs,
-					streetlights
+					streetlights,
+					vector
 				],
 				controls : ol.control.defaults({
 					attribution : false

@@ -128,48 +128,6 @@ function getStreetviewMetadata() {
 	return aPromise;
 }
 
-/* function saveTile(zoom, tilex, tiley, panoId, buffer) {
-	var dirName = path.join(__dirname, zoom, tilex, tiley);
-	var fileName = path.join(dirName, panoId + ".jpeg");
-	
-	shell.mkdir('-p', dirName);
-	
-	console.log("Saving file: " + fileName);
-	
-	fs.writeFile(fileName, buffer, function(err) {
-		console.log("File " + fileName + " written.");
-	});
-} */
-
-/* function getStreetviewTiles(res, results) {
-
-	var rq = request({
-			uri: "https://www.googleapis.com/tile/v1/streetview/tiles/" + results.zoom + "/" + results.tilex + "/" + results.tiley + "?key=" + tileApiKey + "&panoId=" + streetviewPanos.panoIds[0] + "&session=" + streetviewSessionToken,
-			method: "GET",
-			json: true
-		}
-	);
-	
-	var data = [];
-
-    rq.on('data', function(chunk) {
-        data.push(chunk);
-    }).on('end', function() {
-        //at this point data is an array of Buffers
-        //so Buffer.concat() can make us a new Buffer
-        //of all of them together
-        var buffer = Buffer.concat(data);
-		
-		//saveTile(results.zoom, results.tilex, results.tiley, streetviewPanos.panoIds[0], buffer);
-		
-        //console.log("File written");
-		
-		// Send back to requestor.
-		res.send(buffer);
-		res.end();
-    });
-} */
-
 function initialiseStreetview(req, res, results) {
 	
 	// Get a pano id based on the coordinates in results.
@@ -233,18 +191,6 @@ app.get('/initstreetview*', function (req, res) {
 		res.status(200).end();
 	});
 })
-
-/* app.get('/streetviewtile*', function(req, res) {
-	console.log("Got tile request: " + req.url);
-	var pattern = new urlPattern(
-		  /^\/streetviewtile\?zoom=([0-9])&tilex=([0-9])&tiley=([0-9])$/,
-		  ['zoom', 'tilex', 'tiley']
-		);
-		
-	var results = pattern.match(req.url);
-	
-	getStreetviewTiles(res, results);
-}); */
 
 app.get('/gettileapikey', function(req, res) {
 	console.log("Got Tile API key request: " + req.url);
