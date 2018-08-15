@@ -368,6 +368,18 @@ async function doAnalyse(evt, dfd) {
 	var cvs = $(".widget-scene-canvas");
 	var data = cvs[cvs.length - 1];
 	
+	if (typeof data == "undefined") {
+		console.log("No streetview image to process");
+		if ($("#processed")) {
+			$("#processed").remove();
+		}
+		if ($("#object_table"))
+			$("#object_table").remove();
+		
+		$("#objects").append('<div id="object_table" style="position:relative;margin-top:50%;padding=10px;"><span>Please select a Streetview location first</span></div>');
+		return;
+	}
+	
 	$("#analysis").append('<div class="loader">Processing...</div>');
 	
 	$.ajax({
@@ -559,6 +571,17 @@ function doCapture() {
 	var cvs = $(".widget-scene-canvas");
 	var data = cvs[cvs.length - 1];
 	
+	if (typeof data == "undefined") {
+		console.log("No streetview image to process");
+		if ($("#processed")) {
+			$("#processed").remove();
+		}
+		if ($("#object_table"))
+			$("#object_table").remove();
+		
+		$("#objects").append('<span id="object_table">Please select a Streetview location first</span>');
+	}	
+	
 	$("#analysis").append('<div class="loader">Processing...</div>');
 	
 	$.ajax({
@@ -652,11 +675,11 @@ function init() {
 	else if (el.attachEvent)
 		el.attachEvent('onclick', doAnalyse);
 	
-	var el = document.getElementById("sweep");
+	/* var el = document.getElementById("sweep");
 	if (el.addEventListener)
 		el.addEventListener("click", doSweep, false);
 	else if (el.attachEvent)
-		el.attachEvent('onclick', doSweep);
+		el.attachEvent('onclick', doSweep); */
 	
 	var el = document.getElementById("capture");
 	if (el.addEventListener)

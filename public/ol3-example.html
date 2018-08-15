@@ -85,6 +85,7 @@
 			margin-left: 5px;
 			width: 150px;
 			z-index: 999;
+			font-family: Arial;
 		}
 		
 		#setroute {
@@ -214,6 +215,36 @@
 		.slider.round:before {
 		  border-radius: 50%;
 		}
+		
+		a.button1{
+			display:inline-block;
+			padding:0.35em 1.2em;
+			border:0.1em solid #FFFFFF;
+			margin:0 0.3em 0.3em 0;
+			border-radius:0.12em;
+			box-sizing: border-box;
+			text-decoration:none;
+			font-family:'Arial',sans-serif;
+			font-weight:300;
+			font-size: 0.75vw;
+			color:#000000;
+			background-color:#F2F2F2;
+			opacity:0.75;
+			text-align:center;
+			transition: all 0.2s;
+		}
+		a.button1:hover{
+			color:#000000;
+			background-color:#BFBDBD;
+			outline-color:#FFFFFF;
+			opacity:0.75;
+		}
+		@media all and (max-width:30em){
+			a.button1{
+				:block;
+				margin:0.4em auto;
+			}
+		}
 	</style>
   </head>
   <body onload="init()">
@@ -224,15 +255,15 @@
 		</div>
 		<div id="street-view"></div>
 		<div id="analysis">
-			<button id="analyse" type="button">Analyse Current Streetview...</button>
+			<a id="analyse" class="button1">Analyse Current Streetview...</a>
 			<div id="results"></div>
 			<div id="objects"></div>
 			<!--button id="sweep" type="button">Press to Sweep...</button-->
-			<button id="capture" type="button">Capture Image...</button>
-			<button id="setroute" type="button">Set Route</button>
+			<a id="capture" class="button1">Capture Image...</a>
+			<a id="setroute" class="button1">Set Route</a>
 			<div id="routecoords"></div>
 			
-			<button id="followroute" type="button">Follow Route</button>
+			<a id="followroute" class="button1">Follow Route</a>
 		</div>
 	</div>
   </body>
