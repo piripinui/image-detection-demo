@@ -4,6 +4,10 @@ routeSource, routeStyle, currentRoute, followBearing,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord, startFeature, endFeature,
+rustyTxs = {
+	type: "FeatureCollection",
+	features: []
+},
 styles = {
 	pole: new ol.style.Style({
 			image: new ol.style.Icon({
@@ -358,6 +362,13 @@ function Base64Encode(str, encoding = 'utf-8') {
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+  
+function createDownloadLink() {
+	if ($("#download_link"))
+		$("#download_link").remove();
+	
+	$("#download").append('<a id="download_link" href="data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rustyTxs)) + '" download="rustyTxs.geojson">Download GeoJSON</a>');
+}
 
 async function doAnalyse(evt, dfd) {
 	//console.log("Performing analysis...");
@@ -470,6 +481,19 @@ async function doAnalyse(evt, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
+						
+						rustyTxs.features.push({
+							type: "Feature",
+							properties: {
+								type: "rusty_tx"
+							},
+							geometry: {
+								type: "Point",
+								coordinates: [gCoord.lng(), gCoord.lat()]
+							}
+						});
+						if (rustyTxs.features.length > 0)
+							createDownloadLink();
 						break;
 					case 'bad_tx':
 						var gCoord= panorama.getPosition();
