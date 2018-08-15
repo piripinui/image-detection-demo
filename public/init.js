@@ -607,7 +607,7 @@ function doFollowRoute() {
 		
 		function createTask(coord, bearing) {
 			tasks.push(function() {
-				console.log("Executing streetview analysis with bearing = " + bearing);
+				//console.log("Executing streetview analysis with bearing = " + bearing);
 				var dfd = $.Deferred();
 				
 				followBearing = bearing;

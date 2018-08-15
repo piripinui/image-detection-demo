@@ -128,7 +128,7 @@ function getStreetviewMetadata() {
 	return aPromise;
 }
 
-function saveTile(zoom, tilex, tiley, panoId, buffer) {
+/* function saveTile(zoom, tilex, tiley, panoId, buffer) {
 	var dirName = path.join(__dirname, zoom, tilex, tiley);
 	var fileName = path.join(dirName, panoId + ".jpeg");
 	
@@ -139,9 +139,9 @@ function saveTile(zoom, tilex, tiley, panoId, buffer) {
 	fs.writeFile(fileName, buffer, function(err) {
 		console.log("File " + fileName + " written.");
 	});
-}
+} */
 
-function getStreetviewTiles(res, results) {
+/* function getStreetviewTiles(res, results) {
 
 	var rq = request({
 			uri: "https://www.googleapis.com/tile/v1/streetview/tiles/" + results.zoom + "/" + results.tilex + "/" + results.tiley + "?key=" + tileApiKey + "&panoId=" + streetviewPanos.panoIds[0] + "&session=" + streetviewSessionToken,
@@ -168,7 +168,7 @@ function getStreetviewTiles(res, results) {
 		res.send(buffer);
 		res.end();
     });
-}
+} */
 
 function initialiseStreetview(req, res, results) {
 	
@@ -234,7 +234,7 @@ app.get('/initstreetview*', function (req, res) {
 	});
 })
 
-app.get('/streetviewtile*', function(req, res) {
+/* app.get('/streetviewtile*', function(req, res) {
 	console.log("Got tile request: " + req.url);
 	var pattern = new urlPattern(
 		  /^\/streetviewtile\?zoom=([0-9])&tilex=([0-9])&tiley=([0-9])$/,
@@ -244,7 +244,7 @@ app.get('/streetviewtile*', function(req, res) {
 	var results = pattern.match(req.url);
 	
 	getStreetviewTiles(res, results);
-});
+}); */
 
 app.get('/gettileapikey', function(req, res) {
 	console.log("Got Tile API key request: " + req.url);
