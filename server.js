@@ -421,6 +421,12 @@ app.post('/saveimage', function (req, res) {
 							return;
 						}
 						
+						if (resp.statusCode >= 500 && resp.statusCode < 600) {
+							console.log("Got error for detection server: " + resp.statusCode);
+							res.status(resp.statusCode).end();
+							return;
+						}
+						
 						console.log("Start detection request succeeded..." + data);
 						
 						result = JSON.parse(data);

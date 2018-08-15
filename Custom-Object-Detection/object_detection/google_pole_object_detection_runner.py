@@ -52,6 +52,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
     global boxes
 	
     image = Image.open(image_path)
+
     image_np = load_image_into_numpy_array(image)
     image_np_expanded = np.expand_dims(image_np, axis=0)
 
@@ -152,22 +153,28 @@ def getClasses(category_index):
     return str
 
 class startdetection:
-	
+    
     def GET(self):
+        global app
         print("Responding to detection request...")
         t0 = time.time()
-        startDetection()
-        t1 = time.time()
-        total = t1-t0
+
+        try:
+            startDetection()
+            t1 = time.time()
+            total = t1-t0
 		
-        results = "{\"classes\":["
+            results = "{\"classes\":["
 		
-        results += getClasses(CATEGORY_INDEX)
+            results += getClasses(CATEGORY_INDEX)
 		
-        results += "],\"elapsed_time\":" + str(total) + "}"		
+            results += "],\"elapsed_time\":" + str(total) + "}"		
 		
-        return str(results)
+            return str(results)
+        except ValueError:
+            raise web.internalerror()
 				
 if __name__ == "__main__":		
+    web.config.debug = False
     app = web.application(urls, globals())
     app.run()
