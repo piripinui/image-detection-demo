@@ -530,13 +530,13 @@ function doSetRoute() {
 }
 
 function setRoute(startCoord, endCoord) {
-	if ($("#routecoordinfo"))
-		$("#routecoordinfo").remove();
+	/* if ($("#routecoordinfo"))
+		$("#routecoordinfo").remove(); */
 	
 	originCoord = startCoord;
 	destCoord = endCoord;
 	
-	$("#routecoords").append('<span id="routecoordinfo">Route: ' + startCoord[1].toFixed(2) + ', ' + startCoord[0].toFixed(2) + ':' + endCoord[1].toFixed(2) + ', ' + endCoord[0].toFixed(2) + '</span>');
+	//$("#routecoords").append('<span id="routecoordinfo">Route: ' + startCoord[1].toFixed(2) + ', ' + startCoord[0].toFixed(2) + ':' + endCoord[1].toFixed(2) + ', ' + endCoord[0].toFixed(2) + '</span>');
 }
 
 function doFindRoute() {
