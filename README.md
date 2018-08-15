@@ -41,7 +41,9 @@ Load all the Python dependencies using pip. Note that one of the dependencies is
 ## Google API Keys
 Keys to access the Google Maps, Directions and Tile APIs are required to run the app. These should be obtained from Google and stored in text files named according to the API in the `public` directory as follows:
 
-maps_api_key.txt
-directions_api_key.txt
-tile_api_key.txt
+|Filename               |Description                                     |
+|-----------------------|------------------------------------------------|
+|maps_api_key.txt       |Holds the API key for the Google Maps API       |
+|directions_api_key.txt |Holds the API key for the Google Directions API |
+|tile_api_key.txt       |Holds the API for the Google Tile API           |
 
