@@ -91,6 +91,7 @@ with detection_graph.as_default():
         tf.import_graph_def(od_graph_def, name='')
 		
 sess = tf.Session(graph=detection_graph)
+
 def startDetection():
     global sess
     print('Detecting...')
@@ -125,7 +126,7 @@ def getClasses(category_index):
     myScores = np.squeeze(scores)
 		
     max_boxes_to_draw = 20
-    str = ""
+    resultStr = ""
 	
     myRange = min(max_boxes_to_draw, myBoxes.shape[0])
 	
@@ -141,16 +142,21 @@ def getClasses(category_index):
             class_name, percentScore)
 			
         if percentScore > 90:
-            strs.append(display_str)
+            comps = display_str.split(":")
+            resultDesc = "{\"type\":\"" + comps[0] + "\",\"probability\":\"" + comps[1] + "\","
+            box = tuple(myBoxes[i].tolist())
+            ymin, xmin, ymax, xmax = box
+            resultDesc += "\"ymin\":" + str(ymin) + ",\"xmin\":" + str(xmin) + ",\"ymax\":" + str(ymax) + ",\"xmax\":" + str(xmax) + "}"
+            strs.append(resultDesc)
 			
     myRange = len(strs)
     for i in range(myRange):
         if i < myRange - 1:
-            str += "\"" + strs[i] + "\","
+            resultStr += strs[i] + ","
         else:
-            str += "\"" + strs[i] + "\""
+            resultStr += strs[i]
 		
-    return str
+    return resultStr
 
 class startdetection:
     
@@ -175,6 +181,6 @@ class startdetection:
             raise web.internalerror()
 				
 if __name__ == "__main__":		
-    web.config.debug = False
+    web.config.debug = True
     app = web.application(urls, globals())
     app.run()

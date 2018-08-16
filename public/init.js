@@ -401,11 +401,12 @@ async function doAnalyse(evt, dfd) {
 			tab = '<table id="object_table"><tr><th>Equipment</th><th>Probability</th>';
 			
 			for (i = 0; i < result.classes.length; i++) {
-				elems = result.classes[i].split(":");
-				tab += "<tr><td>" + elems[0] + "</td><td>" + elems[1] + "</td></tr>";
+				var type = result.classes[i].type;
+				var percent = result.classes[i].probability;
+				tab += "<tr><td>" + type + "</td><td>" + percent + "</td></tr>";
 				
 				// Add markers.
-				switch(elems[0]) {
+				switch(type) {
 					case 'pole': 
 						var gCoord= panorama.getPosition();
 						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
@@ -422,7 +423,7 @@ async function doAnalyse(evt, dfd) {
 	
 						poleSource.addFeature(poleFeature);
 						
-						addFeaturesForDownload(poleFeature, gCoord, elems[0]);
+						addFeaturesForDownload(poleFeature, gCoord, type);
 						
 						break;
 					case 'streetlight': 
@@ -441,7 +442,7 @@ async function doAnalyse(evt, dfd) {
 	
 						slSource.addFeature(slFeature);
 						
-						addFeaturesForDownload(slFeature, gCoord, elems[0]);
+						addFeaturesForDownload(slFeature, gCoord, type);
 						
 						break;
 					case 'transformer':
@@ -459,7 +460,7 @@ async function doAnalyse(evt, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
-						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						break;
 					case 'rusty_tx':
@@ -478,7 +479,7 @@ async function doAnalyse(evt, dfd) {
 	
 						txSource.addFeature(txFeature);
 						
-						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						break;
 					case 'bad_tx':
@@ -497,7 +498,7 @@ async function doAnalyse(evt, dfd) {
 	
 						txSource.addFeature(txFeature);
 						
-						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						break;
 					default:
