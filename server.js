@@ -49,25 +49,21 @@ function getSession(options, maptype) {
 				if (err)
 					reject(err);
 				else {
-					//console.log("Session token request succeeded");
 					var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
 
 					switch (maptype) {
 						case 'satellite': {
 								satelliteSessionToken = data.session;
-								//console.log("Satellite session: " + satelliteSessionToken);
 								d.setUTCSeconds(data.expiry);
 								console.log("Satellite session expiry: " + data.expiry +" (" + d + ")")
 								break;
 							}
 						case 'roadmap': {
 								roadSessionToken = data.session;
-								//console.log("Road session: " + roadSessionToken);
 								break;
 							}
 						case 'streetview': {
 								streetviewSessionToken = data.session;
-								//console.log("Streetview session: " + streetviewSessionToken);
 							}
 					}
 					resolve(res);
@@ -94,8 +90,6 @@ function getPanoId(locations) {
 			if (err) 
 				reject(err);
 			else {
-				//console.log("Streetview pano id request succeeded: " + err);
-				//console.log(data);
 				streetviewPanos = data;
 				resolve(res);
 			}
@@ -118,8 +112,6 @@ function getStreetviewMetadata() {
 				reject(err);
 			}
 			else {
-				//console.log("Streetview metadata request succeeded");
-				//console.log(data);
 				streetviewMetadata = data;
 				resolve(res);
 			}
@@ -141,8 +133,6 @@ function initialiseStreetview(req, res, results) {
 		],
 		'radius' : 50
 	};
-	
-	//console.log(locations);
 	
 	var panoPromise = getPanoId(locations);
 	
@@ -436,7 +426,7 @@ app.post('/saveimage', function (req, res) {
 					request({
 						uri: "http://localhost:3200/startdetection",
 						method: "GET"
-					},function (detectionErr, resp, data) {
+					}, function (detectionErr, resp, data) {
 						if (detectionErr) {
 							console.log("Problem during image detection: " + detectionErr);
 							res.status(500).end();
