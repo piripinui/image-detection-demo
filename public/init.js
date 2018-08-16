@@ -102,25 +102,21 @@ function getSession(options, maptype) {
 		contentType : "application/json; charset=utf-8",
 		dataType : "json",
 		success : function (data) {
-			//console.log("Session token request succeeded");
 			var d = new Date(0); // The 0 there is the key, which sets the date to the epoch
 
 			switch (maptype) {
 				case 'satellite': {
 						satelliteSessionToken = data.session;
-						//console.log("Satellite session: " + satelliteSessionToken);
 						d.setUTCSeconds(data.expiry);
 						console.log("Satellite session expiry: " + data.expiry +" (" + d + ")")
 						break;
 					}
 				case 'roadmap': {
 						roadSessionToken = data.session;
-						//console.log("Road session: " + roadSessionToken);
 						break;
 					}
 				case 'streetview': {
 						streetviewSessionToken = data.session;
-						//console.log("Streetview session: " + streetviewSessionToken);
 					}
 			}
 			dfd.resolve();
@@ -141,8 +137,6 @@ function getStreetviewSession() {
 function updateAttribution(map) {
 	var extent = map.getView().calculateExtent(map.getSize());
 	var projectedExtent = ol.proj.transformExtent(extent, 'EPSG:3857', 'EPSG:4326');
-
-	//console.log(projectedExtent);
 
 	$.ajax({
 		url : "https://www.googleapis.com/tile/v1/viewport?session=" + satelliteSessionToken + "&zoom=" + map.getView().getZoom() + "&north=" + projectedExtent[3] + "&south=" + projectedExtent[1] + "&east=" + projectedExtent[2] + "&west=" + projectedExtent[0] + "&key=" + tileApiKey,
@@ -170,8 +164,6 @@ function getPanoId(locations) {
 		contentType : "application/json; charset=utf-8",
 		dataType : "json",
 		success : function (data) {
-			//console.log("Streetview pano id request succeeded");
-			//console.log(data);
 			streetviewPanos = data;
 			dfd.resolve();
 		}
@@ -189,8 +181,6 @@ function getStreetviewMetadata() {
 		contentType : "application/json; charset=utf-8",
 		dataType : "json",
 		success : function (data) {
-			//console.log("Streetview metadata request request succeeded");
-			//console.log(data);
 			streetviewMetadata = data;
 			dfd.resolve();
 		},
@@ -239,7 +229,6 @@ function getTileUrl(pano, zoom, tileX, tileY) {
 }
 
 function getPanoramaData(pano) {
-	//console.log("Getting panorama...");
 	if (pano == "custom") {
 		return {
 		  location: {
@@ -264,15 +253,12 @@ function getPano() {
 }
 
 function getHeading() {
-	//console.log("Returning SV heading of " + streetviewMetadata.heading);
 	if (streetviewMetadata.heading < 0)
 		streetviewMetadata.heading = 360 + streetviewMetadata.heading;
 	return streetviewMetadata.heading;
 }
 
 function initPanorama(dfd) {
-	//console.log("Creating panorama...");
-	
 	if (!panorama) {
 		panorama = new google.maps.StreetViewPanorama(
 			document.getElementById('street-view'),
@@ -285,22 +271,19 @@ function initPanorama(dfd) {
 			});
 			
 		panorama.addListener('pano_changed', function() {
-			//console.log("Streetview: pano_changed");
-			//console.log("Panorama moved");
+
 		});
 		
 		panorama.addListener('position_changed', function() {
-			//console.log("Streetview: position_changed");
+
 			var pos = panorama.getPosition();
 			var coord = ol.proj.transform([pos.lng(), pos.lat()], 'EPSG:4326', 'EPSG:3857'); 
-			//console.log("Panorama position changed: " + pos);
 			view.setCenter(coord);
 			setMarker(coord);
 			heading = panorama.getPov().heading;
 		});
 		
 		panorama.addListener('pov_changed', function() {
-			//console.log("Streetview: pov_changed");
 			heading = panorama.getPov().heading;
 			// Update marker.
 			var defaultStyle = new ol.style.Style({
@@ -323,16 +306,12 @@ function initPanorama(dfd) {
 		});
 		
 		panorama.addListener('links_changed', function() {
-			//console.log("Streetview: links_changed");
 			if (panorama.getPano() === getPano()) {
 				panorama.getLinks().push({
 				  description: makeAddressString(),
 				  heading: getHeading(),
 				  pano: getPano()
 				});
-			}
-			else {
-			  //console.log("Panorama ids do not match");
 			}
 		});
 		dfd.resolve();
@@ -382,8 +361,6 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 }
 
 async function doAnalyse(evt, dfd) {
-	//console.log("Performing analysis...");
-	
 	// Sleep to give streetview time to render image.
 	await sleep(800);
 	
@@ -600,6 +577,7 @@ function doCapture() {
 	console.log("Performing analysis...");
 	
 	var cvs = $(".widget-scene-canvas");
+	
 	var data = cvs[cvs.length - 1];
 	
 	if (typeof data == "undefined") {
@@ -661,7 +639,6 @@ function doFollowRoute() {
 		
 		function createTask(coord, bearing) {
 			tasks.push(function() {
-				//console.log("Executing streetview analysis with bearing = " + bearing);
 				var dfd = $.Deferred();
 				
 				followBearing = bearing;
@@ -794,16 +771,12 @@ function showStreetview(latLon) {
 		contentType : "application/json; charset=utf-8",
 		dataType : "json",
 		success : function (data) {
-			//console.log("Tile server initialisation succeeded");
 			streetviewMetadata = data;
 			
 			if (followBearing) {
 				streetviewMetadata.heading = followBearing;
 				followBearing = null;
 			}
-			
-			//console.log("Pano id = " + streetviewMetadata.panoId + ", lat = " + streetviewMetadata.lat + ", lon = " + streetviewMetadata.lng);
-			//console.log("Request coordinates = " + latLon[1] + ", " + latLon[0]);
 
 			initPanorama(dfd);
 		}
