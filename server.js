@@ -357,7 +357,7 @@ app.post('/storeimage', function (req, res) {
 })
 
 function createAnnotation(filename, dir, detectionData, width, height) {
-	
+	// Creates Pascal VOC XML data from the supplied parameters.
 	var buf = "<annotation>\n";
 	
 	buf += "<folder>" + dir + "</folder>\n";
