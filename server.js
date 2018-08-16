@@ -459,7 +459,8 @@ app.post('/saveimage', function (req, res) {
 						
 						result = JSON.parse(data);
 
-						// Return the processed image to the requestor.
+						// Return the processed image to the requestor but also store the source image with Pascal VOC XMl metadata based
+						// on the detection results.
 						
 						var targetFile = imageDir + 'processed/' + filename.replace("png", "jpg");
 					  
@@ -472,7 +473,7 @@ app.post('/saveimage', function (req, res) {
 								var fn = filename.replace("png", "jpg");
 								var srcFile = imageDir + fn;
 								var storeFile = imageDir + "stored/" + fn;
-								// Move source image to stored images with annotations.
+								// Move source image to stored images with annotations in a subdirectory called "stored".
 								fs.rename(srcFile, storeFile, (err, data) => {
 									if (err) {
 										console.log("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
@@ -484,6 +485,7 @@ app.post('/saveimage', function (req, res) {
 										
 										var jpegData = jpeg.decode(imgData, true);
 										
+										// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
 										var anno = createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
 										var annoFile = imageDir + "/stored/" + fn.replace("jpg", "xml");
 										fs.writeFile(annoFile, anno, (err, data) => {
@@ -495,6 +497,7 @@ app.post('/saveimage', function (req, res) {
 												console.log("File " + annoFile + " written successfully");
 										});
 
+										// Return the annotated file back to the requesting client along with the detection metadata.
 										var imgBuf = new Buffer(imgData);
 										try {
 											var buf = imgBuf.toString('base64');
