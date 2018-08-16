@@ -216,12 +216,6 @@ function toDataURL(url, callback) {
 	xhr.send();
 }
 
-function getStreetviewTiles() {
-	toDataURL("https://www.googleapis.com/tile/v1/streetview/tiles/2/0/0?key=" + tileApiKey + "&panoId=" + streetviewPanos.panoIds[0] + "&session=" + streetviewSessionToken, function(dataUrl) {
-		$("#streetview").attr("src", dataUrl);
-	});
-}
-
 function makeAddressString() {
 	// Constructs a string for display from address components.
 	var addressString = "";
@@ -560,10 +554,10 @@ async function doAnalyse(evt, dfd) {
 	})
 }
 	
-function doSweep() {
+/* function doSweep() {
 	console.log("Sweeping...");
 }
-
+ */
 function doSetRoute() {
 	console.log("Setting route...");
 	map.getTarget().style.cursor = 'pointer';
@@ -572,13 +566,8 @@ function doSetRoute() {
 }
 
 function setRoute(startCoord, endCoord) {
-	/* if ($("#routecoordinfo"))
-		$("#routecoordinfo").remove(); */
-	
 	originCoord = startCoord;
 	destCoord = endCoord;
-	
-	//$("#routecoords").append('<span id="routecoordinfo">Route: ' + startCoord[1].toFixed(2) + ', ' + startCoord[0].toFixed(2) + ':' + endCoord[1].toFixed(2) + ', ' + endCoord[0].toFixed(2) + '</span>');
 }
 
 function doFindRoute() {
