@@ -4,7 +4,7 @@ routeSource, routeStyle, currentRoute, followBearing,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord, startFeature, endFeature,
-rustyTxs = {
+downloadFeatures = {
 	type: "FeatureCollection",
 	features: []
 },
@@ -367,9 +367,24 @@ function createDownloadLink() {
 	if ($("#download_link"))
 		$("#download_link").remove();
 	
-	$("#download").append('<a id="download_link" href="data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rustyTxs)) + '" download="rustyTxs.geojson">Download GeoJSON</a>');
+	$("#download").append('<a id="download_link" href="data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(downloadFeatures)) + '" download="downloadFeatures.geojson">Download GeoJSON</a>');
 	$("#download").css("background-color", "#F2F2F2");
 	$("#download").css("border", "0.1em solid #FFFFFF");
+}
+
+function addFeaturesForDownload(aFeature, gCoord, type) {
+	downloadFeatures.features.push({
+		type: "Feature",
+		properties: {
+			type: type
+		},
+		geometry: {
+			type: "Point",
+			coordinates: [gCoord.lng(), gCoord.lat()]
+		}
+	});
+	if (downloadFeatures.features.length > 0)
+		createDownloadLink();
 }
 
 async function doAnalyse(evt, dfd) {
@@ -435,6 +450,9 @@ async function doAnalyse(evt, dfd) {
 						poleFeature.setStyle(poleStyle);
 	
 						poleSource.addFeature(poleFeature);
+						
+						addFeaturesForDownload(poleFeature, gCoord, elems[0]);
+						
 						break;
 					case 'streetlight': 
 						var gCoord= panorama.getPosition();
@@ -451,6 +469,9 @@ async function doAnalyse(evt, dfd) {
 						slFeature.setStyle(slStyle);
 	
 						slSource.addFeature(slFeature);
+						
+						addFeaturesForDownload(slFeature, gCoord, elems[0]);
+						
 						break;
 					case 'transformer':
 						var gCoord= panorama.getPosition();
@@ -467,6 +488,8 @@ async function doAnalyse(evt, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
+						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						
 						break;
 					case 'rusty_tx':
 						var gCoord= panorama.getPosition();
@@ -484,18 +507,8 @@ async function doAnalyse(evt, dfd) {
 	
 						txSource.addFeature(txFeature);
 						
-						rustyTxs.features.push({
-							type: "Feature",
-							properties: {
-								type: "rusty_tx"
-							},
-							geometry: {
-								type: "Point",
-								coordinates: [gCoord.lng(), gCoord.lat()]
-							}
-						});
-						if (rustyTxs.features.length > 0)
-							createDownloadLink();
+						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						
 						break;
 					case 'bad_tx':
 						var gCoord= panorama.getPosition();
@@ -512,6 +525,9 @@ async function doAnalyse(evt, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
+						
+						addFeaturesForDownload(txFeature, gCoord, elems[0]);
+						
 						break;
 					default:
 						break;
