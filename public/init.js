@@ -368,6 +368,8 @@ function createDownloadLink() {
 		$("#download_link").remove();
 	
 	$("#download").append('<a id="download_link" href="data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(rustyTxs)) + '" download="rustyTxs.geojson">Download GeoJSON</a>');
+	$("#download").css("background-color", "#F2F2F2");
+	$("#download").css("border", "0.1em solid #FFFFFF");
 }
 
 async function doAnalyse(evt, dfd) {
