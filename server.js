@@ -428,9 +428,6 @@ app.post('/saveimage', function (req, res) {
 					pngToJpeg({quality: 90})
 				]
 			}).then((files) => {
-				// Please keep in mind that all files now have the wrong extension
-				// You might want to change them manually
-				
 				var newFn = fullFilename.replace("png", "jpg");
 				fs.rename(fullFilename, newFn, function(err) {
 					if ( err ) console.log('ERROR: ' + err);
@@ -459,7 +456,7 @@ app.post('/saveimage', function (req, res) {
 						
 						result = JSON.parse(data);
 
-						// Return the processed image to the requestor but also store the source image with Pascal VOC XMl metadata based
+						// Return the processed image to the requestor but also store the source image with Pascal VOC XML metadata based
 						// on the detection results.
 						
 						var targetFile = imageDir + 'processed/' + filename.replace("png", "jpg");
