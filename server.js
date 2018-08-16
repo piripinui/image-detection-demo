@@ -436,12 +436,9 @@ app.post('/saveimage', function (req, res) {
 					request({
 						uri: "http://localhost:3200/startdetection",
 						method: "GET"
-					},
-					function (detectionErr, resp, data) {
-						
+					},function (detectionErr, resp, data) {
 						if (detectionErr) {
-							// node couldn't execute the command
-							console.log("Problem running process_imagery: " + detectionErr);
+							console.log("Problem during image detection: " + detectionErr);
 							res.status(500).end();
 							return;
 						}
