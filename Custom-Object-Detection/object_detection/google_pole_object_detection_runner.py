@@ -69,7 +69,9 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
         line_thickness=8)
     fig = plt.figure()
     #fig.set_size_inches(16, 9)
-    fig.set_size_inches(9, 16)
+    (im_width, im_height) = image.size
+    aspectRatio = im_width / im_height
+    fig.set_size_inches(16 * aspectRatio, 16)
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)

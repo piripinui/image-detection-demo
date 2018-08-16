@@ -15,7 +15,8 @@ imagemin = require('imagemin'),
 pngToJpeg = require('png-to-jpeg'),
 cp = require('child_process'),
 polyline = require( 'google-polyline'),
-imageDir = process.argv[2];
+imageDir = process.argv[2],
+jpeg = require('jpeg-js');
 
 if (!imageDir)
 	imageDir = "images";
@@ -355,6 +356,45 @@ app.post('/storeimage', function (req, res) {
   });
 })
 
+function createAnnotation(filename, dir, detectionData, width, height) {
+	
+	var buf = "<annotation>\n";
+	
+	buf += "<folder>" + dir + "</folder>\n";
+	buf += "<filename>" + filename + "</filename>\n";
+	buf += "<path>" + "</path>\n";
+	buf += "<size>\n";
+
+	buf += "<width>" + width + "</width>\n";
+	buf += "<height>" + height + "</height>\n";
+	buf += "<depth>3</depth>\n";
+
+	buf += "</size>\n";
+	buf += "<segmented>" + "</segmented>\n";
+	buf += "<source>\n<database>Unknown</database>\n</source>\n";
+	
+	
+	for (i = 0; i < detectionData.classes.length; i++) {
+		buf += "<object>\n";
+		buf	+= "<name>" + detectionData.classes[i].type + "</name>\n";
+
+		buf += "<pose>Unspecified</pose>\n";
+		buf += "<truncated>0</truncated>\n";
+		buf += "<difficult>0</difficult>\n";
+		buf += "<bndbox>\n";
+		buf += "<xmin>" + Math.round(width * detectionData.classes[i].xmin) + "</xmin>\n";
+		buf += "<ymin>" + Math.round(height * detectionData.classes[i].ymin) + "</ymin>\n";
+		buf += "<xmax>" + Math.round(width * detectionData.classes[i].xmax) + "</xmax>\n";
+		buf += "<ymax>" + Math.round(height * detectionData.classes[i].ymax) + "</ymax>\n";
+		buf += "</bndbox>\n";
+		buf += "</object>\n";
+	}
+	
+	buf += "</annotation>\n";
+	
+	return buf;
+}
+
 app.post('/saveimage', function (req, res) {
   
 	var mt = base64MimeType(req.body);  
@@ -401,40 +441,61 @@ app.post('/saveimage', function (req, res) {
 						method: "GET"
 					},
 					function (detectionErr, resp, data) {
-						// Delete the captured file
-						fs.unlink(newFn, (unlinkErr) => {
-							try {
-								if (unlinkErr) throw unlinkErr;
-								console.log(newFn + ' was deleted');
-								
-								if (detectionErr) {
-									// node couldn't execute the command
-									console.log("Problem running process_imagery: " + detectionErr);
-									res.status(500).end();
-									return;
-								}
-								
-								if (resp.statusCode >= 500 && resp.statusCode < 600) {
-									console.log("Got error for detection server: " + resp.statusCode);
-									res.status(resp.statusCode).end();
-									return;
-								}
-								
-								console.log("Start detection request succeeded..." + data);
-								
-								result = JSON.parse(data);
-								
-								// Return the processed image to the requestor.
-							  
-								fs.readFile(imageDir + 'processed/' + filename.replace("png", "jpg"), (err, data) => {
+						
+						if (detectionErr) {
+							// node couldn't execute the command
+							console.log("Problem running process_imagery: " + detectionErr);
+							res.status(500).end();
+							return;
+						}
+						
+						if (resp.statusCode >= 500 && resp.statusCode < 600) {
+							console.log("Got error for detection server: " + resp.statusCode);
+							res.status(resp.statusCode).end();
+							return;
+						}
+						
+						console.log("Start detection request succeeded..." + data);
+						
+						result = JSON.parse(data);
+
+						// Return the processed image to the requestor.
+						
+						var targetFile = imageDir + 'processed/' + filename.replace("png", "jpg");
+					  
+						fs.readFile(targetFile, (err, imgData) => {
+							if (err) {
+								res.status(500).end();
+								return;
+							}
+							else {
+								var fn = filename.replace("png", "jpg");
+								var srcFile = imageDir + fn;
+								var storeFile = imageDir + "stored/" + fn;
+								// Move source image to stored images with annotations.
+								fs.rename(srcFile, storeFile, (err, data) => {
 									if (err) {
+										console.log("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
 										res.status(500).end();
 										return;
 									}
 									else {
-										//console.log("Returning jpeg image in base64 encoding...");
+										console.log("File " + srcFile + " moved to /stored");
+										
+										var jpegData = jpeg.decode(imgData, true);
+										
+										var anno = createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
+										var annoFile = imageDir + "/stored/" + fn.replace("jpg", "xml");
+										fs.writeFile(annoFile, anno, (err, data) => {
+											if (err) {
+												res.status(500).end();
+												return;
+											}
+											else 
+												console.log("File " + annoFile + " written successfully");
+										});
 
-										var imgBuf = new Buffer(data);
+										var imgBuf = new Buffer(imgData);
 										try {
 											var buf = imgBuf.toString('base64');
 										}
@@ -448,11 +509,6 @@ app.post('/saveimage', function (req, res) {
 										res.end(JSON.stringify(result));
 									}
 								});
-							}
-							catch(err) {
-								console.log("Problem deleting " + newFn);
-								res.status(500).end();
-								return;
 							}
 						});
 					});
