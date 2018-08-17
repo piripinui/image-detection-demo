@@ -797,7 +797,7 @@ def to_absolute_coordinates(boxlist, height, width,
     # Ensure range of input boxes is correct.
     if check_range:
       box_maximum = tf.reduce_max(boxlist.get())
-      max_assert = tf.Assert(tf.greater_equal(1.01, box_maximum),
+      max_assert = tf.Assert(tf.greater_equal(1.02, box_maximum),
                              ['maximum box coordinate value is larger '
                               'than 1.01: ', box_maximum])
       with tf.control_dependencies([max_assert]):
