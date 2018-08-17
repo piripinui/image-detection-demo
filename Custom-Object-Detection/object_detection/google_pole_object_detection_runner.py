@@ -66,7 +66,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
         CATEGORY_INDEX,
         min_score_thresh=MINIMUM_CONFIDENCE,
         use_normalized_coordinates=True,
-        line_thickness=8)
+        line_thickness=2)
     fig = plt.figure()
     #fig.set_size_inches(16, 9)
     (im_width, im_height) = image.size
