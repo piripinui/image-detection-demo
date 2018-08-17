@@ -42,6 +42,7 @@ from object_detection.utils import label_map_util
 def dict_to_tf_example(data,
                        label_map_dict,
                        image_subdirectory,
+					   totalFiles,
                        ignore_difficult_instances=False):
   """Convert XML derived dict to tf.Example proto.
 
@@ -71,7 +72,8 @@ def dict_to_tf_example(data,
   if image.format != 'JPEG':
     raise ValueError('Image format not JPEG (' + img_path + "), format = " + image.format)
 	
-  print("Processing " + img_path)
+  totalFiles += 1
+  
   key = hashlib.sha256(encoded_jpg).hexdigest()
 
   width = int(data['size']['width'])
@@ -86,19 +88,22 @@ def dict_to_tf_example(data,
   truncated = []
   poses = []
   difficult_obj = []
-  for obj in data['object']:
-    difficult_obj.append(int(0))
+  try:
+        for obj in data['object']:
+            difficult_obj.append(int(0))
 
-    xmin.append(float(obj['bndbox']['xmin']) / width)
-    ymin.append(float(obj['bndbox']['ymin']) / height)
-    xmax.append(float(obj['bndbox']['xmax']) / width)
-    ymax.append(float(obj['bndbox']['ymax']) / height)
+            xmin.append(float(obj['bndbox']['xmin']) / width)
+            ymin.append(float(obj['bndbox']['ymin']) / height)
+            xmax.append(float(obj['bndbox']['xmax']) / width)
+            ymax.append(float(obj['bndbox']['ymax']) / height)
 
-    class_name = obj['name']
-    classes_text.append(class_name.encode('utf8'))
-    classes.append(label_map_dict[class_name])
-    truncated.append(int(0))
-    poses.append('Unspecified'.encode('utf8'))
+            class_name = obj['name']
+            classes_text.append(class_name.encode('utf8'))
+            classes.append(label_map_dict[class_name])
+            truncated.append(int(0))
+            poses.append('Unspecified'.encode('utf8'))
+  except KeyError:
+	    print("No object defs in VOC file for " + data['filename'])
 
   example = tf.train.Example(features=tf.train.Features(feature={
       'image/height': dataset_util.int64_feature(height),
@@ -120,7 +125,8 @@ def dict_to_tf_example(data,
       'image/object/truncated': dataset_util.int64_list_feature(truncated),
       'image/object/view': dataset_util.bytes_list_feature(poses),
   }))
-  return example
+  
+  return example, totalFiles
 
 
 def create_tf_record(output_filename,
@@ -137,6 +143,7 @@ def create_tf_record(output_filename,
     image_dir: Directory where image files are stored.
     examples: Examples to parse and save to tf record.
   """
+  totalFiles = 0
   writer = tf.python_io.TFRecordWriter(output_filename)
   for idx, example in enumerate(examples):
     if idx % 100 == 0:
@@ -151,10 +158,11 @@ def create_tf_record(output_filename,
     xml = etree.fromstring(xml_str)
     data = dataset_util.recursive_parse_xml_to_dict(xml)['annotation']
 
-    tf_example = dict_to_tf_example(data, label_map_dict, image_dir)
+    tf_example,totalFiles = dict_to_tf_example(data, label_map_dict, image_dir, totalFiles)
     writer.write(tf_example.SerializeToString())
 
   writer.close()
+  print("Total files processed: " + str(totalFiles))
 
 def main(_):
   label_map_dict = label_map_util.get_label_map_dict('pole_annotations/label_map.pbtxt')
@@ -170,6 +178,7 @@ def main(_):
   random.seed(42)
   random.shuffle(examples_list)
   num_examples = len(examples_list)
+  print("Number of examples = " + str(num_examples))
   num_train = int(0.7 * num_examples)
   train_examples = examples_list[:num_train]
   val_examples = examples_list[num_train:]
