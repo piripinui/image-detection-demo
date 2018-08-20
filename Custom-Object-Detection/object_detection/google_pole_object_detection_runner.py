@@ -69,9 +69,13 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
         line_thickness=2)
     fig = plt.figure()
     #fig.set_size_inches(16, 9)
+	# The original image's size.
     (im_width, im_height) = image.size
-    aspectRatio = im_width / im_height
-    fig.set_size_inches(16 * aspectRatio, 16)
+    dpi = 62
+    targetHeight = im_height / dpi
+    targetWidth = im_width / dpi
+	# Set the output image to be the same size as the input image.
+    fig.set_size_inches(targetWidth, targetHeight)
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
@@ -79,7 +83,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
     #plt.imshow(image_np, aspect = 'auto')
     plt.imshow(image_np, aspect = 'equal')
     path, file = os.path.split(image_path)
-    plt.savefig(PATH_TO_TEST_IMAGES_DIR + '/processed/' + file, dpi = 62)
+    plt.savefig(PATH_TO_TEST_IMAGES_DIR + '/processed/' + file, dpi = dpi)
     plt.close(fig)
 
 # Load model into memory
