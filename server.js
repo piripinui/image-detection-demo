@@ -348,8 +348,9 @@ app.post('/storeimage', function (req, res) {
 
 function createAnnotation(filename, dir, detectionData, width, height) {
 	// Creates Pascal VOC XML data from the supplied parameters.
-	var buf = "<annotation>\n";
+	var buf = "";
 	
+	buf += "<annotation>\n";
 	buf += "<folder>" + dir + "</folder>\n";
 	buf += "<filename>" + filename + "</filename>\n";
 	buf += "<path>" + "</path>\n";
@@ -385,7 +386,7 @@ function createAnnotation(filename, dir, detectionData, width, height) {
 	return buf;
 }
 
-app.post('/saveimage', function (req, res) {
+app.post('/analyseimage', function (req, res) {
   
 	var mt = base64MimeType(req.body);  
 	var filename;

@@ -382,7 +382,7 @@ async function doAnalyse(evt, dfd) {
 	$("#analysis").append('<div class="loader">Processing...</div>');
 	
 	$.ajax({
-		url: "/saveimage",
+		url: "/analyseimage",
 		type: "POST",
 		contentType: "application/base64",
 		data: data.toDataURL(),

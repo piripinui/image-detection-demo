@@ -47,3 +47,11 @@ Keys to access the [Google Maps](https://developers.google.com/maps/documentatio
 |`public/directions_api_key.txt` |Holds the API key for the Google Directions API |
 |`public/tile_api_key.txt`       |Holds the API for the Google Tile API           |
 
+## Services
+The nodejs server creates several endpoints used in the demo:
+
+|Service Name       |Description                                                  |
+|-------------------|-------------------------------------------------------------|
+|`/analyseimage`    |POST request to analyse a Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
+|`/storeimage`      |POST request that stores a Base64 encoded image in a directory local to the server. Returns success or failure. |
+
