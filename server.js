@@ -18,10 +18,28 @@ polyline = require( 'google-polyline'),
 imageDir = process.argv[2],
 jpeg = require('jpeg-js');
 
+const { createLogger, format, transports } = require('winston');
+const { combine, timestamp, label, printf } = format;
+
+const myFormat = printf(info => {
+  return `${info.timestamp} ${info.level}: ${info.message}`;
+});
+
+var logger = createLogger({
+	format: combine(
+		timestamp(),
+		myFormat
+	),
+	transports: [
+		new transports.Console(),
+		new transports.File({ filename: 'logs/server.log' })
+	]
+});
+
 if (!imageDir)
 	imageDir = "images";
 
-console.log("Writing images to " + imageDir);
+logger.info("Writing images to " + imageDir);
 
 var resultDir = process.cwd() + "\\data";
 
@@ -55,7 +73,10 @@ function getSession(options, maptype) {
 						case 'satellite': {
 								satelliteSessionToken = data.session;
 								d.setUTCSeconds(data.expiry);
-								console.log("Satellite session expiry: " + data.expiry +" (" + d + ")")
+								logger.log({
+									level: 'info',
+									message: "Satellite session expiry: " + data.expiry +" (" + d + ")"
+								});
 								break;
 							}
 						case 'roadmap': {
@@ -108,7 +129,8 @@ function getStreetviewMetadata() {
 		},
 		function (err, res, data) {
 			if (err) {
-				console.log("error " + err);
+				logger.error("Error getting Streetview metadata: " + err);
+
 				reject(err);
 			}
 			else {
@@ -143,7 +165,7 @@ function initialiseStreetview(req, res, results) {
 			return getStreetviewMetadata()
 		},
 		function() {
-			console.log("Rejected");
+			logger.error("Rejected");
 		}
 	);
 }
@@ -160,7 +182,7 @@ app.get('/initstreetviewsession*', function (req, res) {
 	
 	aPromise
 	.then(function() {
-		console.log("Returning session response");
+		logger.info("Returning session response");
 		res.send(streetviewSessionToken)
 		res.status(200).end();
 	});
@@ -184,7 +206,7 @@ app.get('/initstreetview*', function (req, res) {
 })
 
 app.get('/gettileapikey', function(req, res) {
-	console.log("Got Tile API key request: " + req.url);
+	logger.info("Got Tile API key request: " + req.url);
 
 	res.send(tileApiKey);
 	res.status(200).end();
@@ -224,7 +246,7 @@ app.get('/getdirections', function(req, res) {
 		},
 		function (err, resp, data) {
 			if (err) {
-				console.log("error " + err);
+				logger.error("Error from Directions API request: " + err);
 				res.status(500).end();
 			}
 			else {
@@ -251,7 +273,7 @@ app.get('/getdirections', function(req, res) {
 		});
 	}
 	else {
-		console.log("Bad directions request");
+		logger.error("Bad directions request (" + results + ")");
 		res.status(500).end();
 	}
 });
@@ -315,7 +337,7 @@ app.post('/storeimage', function (req, res) {
 				var newFn = fullFilename.replace("png", "jpg");
 				fs.rename(fullFilename, newFn, function(err) {
 					if ( err ) console.log('ERROR: ' + err);
-					console.log("Renamed " + fullFilename + " to " + newFn + "...stored in Custom-Object-Detection/pole_images.");
+					logger.info("Renamed " + fullFilename + " to " + newFn + "...stored in Custom-Object-Detection/pole_images.");
 					var result = {};
 					
 					fs.readFile(fullFilename.replace("png", "jpg"), (err, data) => {
@@ -324,14 +346,14 @@ app.post('/storeimage', function (req, res) {
 							return;
 						}
 						else {
-							console.log("Returning jpeg image in base64 encoding...");
+							logger.info("Returning jpeg image in base64 encoding...");
 
 							var imgBuf = new Buffer(data);
 							try {
 								var buf = imgBuf.toString('base64');
 							}
 							catch(err) {
-								console.log("Failed to return processed image: " + err);
+								logger.error("Failed to return processed image: " + err);
 								res.status(500).end();
 								return;
 							}
@@ -419,7 +441,7 @@ app.post('/analyseimage', function (req, res) {
 				
 				if (found) {
 					// Got a jpg file - delete it.
-					console.log("Deleting file: " + imageDir + "/" + aFile);
+					logger.info("Deleting file: " + imageDir + "/" + aFile);
 					fs.unlinkSync(imageDir + aFile);
 				}
 			}
@@ -434,7 +456,7 @@ app.post('/analyseimage', function (req, res) {
 				res.status(500).end();
 			else {
 				var fullFilename = imageDir + filename;
-				console.log("File " + fullFilename);
+				logger.info("File " + fullFilename);
 				
 				imagemin([fullFilename], imageDir, {
 					plugins: [
@@ -444,25 +466,25 @@ app.post('/analyseimage', function (req, res) {
 					var newFn = fullFilename.replace("png", "jpg");
 					fs.rename(fullFilename, newFn, function(err) {
 						if ( err ) console.log('ERROR: ' + err);
-						console.log("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
+						logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
 						
 						request({
 							uri: "http://localhost:3200/startdetection",
 							method: "GET"
 						}, function (detectionErr, resp, data) {
 							if (detectionErr) {
-								console.log("Problem during image detection: " + detectionErr);
+								logger.error("Problem during image detection: " + detectionErr);
 								res.status(500).end();
 								return;
 							}
 							
 							if (resp.statusCode >= 500 && resp.statusCode < 600) {
-								console.log("Got error for detection server: " + resp.statusCode);
+								logger.error("Got error for detection server: " + resp.statusCode);
 								res.status(resp.statusCode).end();
 								return;
 							}
 							
-							console.log("Start detection request succeeded..." + data);
+							logger.info("Start detection request succeeded..." + data);
 							
 							result = JSON.parse(data);
 
@@ -483,12 +505,12 @@ app.post('/analyseimage', function (req, res) {
 									// Move source image to stored images with annotations in a subdirectory called "stored".
 									fs.rename(srcFile, storeFile, (err, data) => {
 										if (err) {
-											console.log("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
+											logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
 											res.status(500).end();
 											return;
 										}
 										else {
-											console.log("File " + srcFile + " moved to /stored");
+											logger.info("File " + srcFile + " moved to /stored");
 											
 											var jpegData = jpeg.decode(imgData, true);
 											
@@ -501,7 +523,7 @@ app.post('/analyseimage', function (req, res) {
 													return;
 												}
 												else 
-													console.log("File " + annoFile + " written successfully");
+													logger.info("File " + annoFile + " written successfully");
 											});
 
 											// Return the annotated file back to the requesting client along with the detection metadata.
@@ -510,7 +532,7 @@ app.post('/analyseimage', function (req, res) {
 												var buf = imgBuf.toString('base64');
 											}
 											catch(err) {
-												console.log("Failed to return processed image: " + err);
+												logger.error("Failed to return processed image: " + err);
 												res.status(500).end();
 												return;
 											}
@@ -530,7 +552,7 @@ app.post('/analyseimage', function (req, res) {
 })
 
 app.listen(listenPort, function () {
-	console.log('google_maptiles_demo app listening on port ' + listenPort + '!');
+	logger.info('google_maptiles_demo app listening on port ' + listenPort + '!');
 });
 
 function initialise() {

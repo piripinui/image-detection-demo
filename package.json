@@ -14,7 +14,8 @@
     "promise": "^8.0.1",
     "request": "^2.81.0",
     "shelljs": "^0.8.2",
-    "url-pattern": "^1.0.3"
+    "url-pattern": "^1.0.3",
+    "winston": "^3.0.0"
   },
   "engines": {
     "node": ">0.10.45",
