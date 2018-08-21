@@ -19,6 +19,7 @@ The nodejs server creates several endpoints used in the demo:
 |-------------------|-------------------------------------------------------------|
 |`/analyseimage`    |POST request to analyse a JPEG Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
 |`/storeimage`      |POST request that stores a JPEG Base64 encoded image in a directory local to the server. Returns success or failure. |
+|`/getdirections`   |GET request to the [Google Directions API](https://developers.google.com/maps/documentation/directions/start) to retrieve quickest route between a start and an end coordinate. The two coordinates are specified as decimal degree latlons using the parameters `origin` and `destination`.|
 
 ## Demo Client
 
