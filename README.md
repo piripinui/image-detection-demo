@@ -4,11 +4,23 @@ This app demonstrates how a map-based client would use a Machine Learning-based 
 
 The map client is defined in the public directory. It is a basic Openlayers client using Google Streetview. When the "Press to Analyse..." button is pushed, it captures the Streetview image from the DOM and makes a POST request to the /saveimage endpoint hosted by the server. The request contains the image in its body, which is received by the server and saved as a file to disk. The server then makes a GET request to the ML service, which processes all JPEG files in the directory and produces new images with the detected equipment labelled on them. The request to the ML service is then responded to as successful and the app server then finds the processed file and the detection results and returns it to the client as a JSON object.
 
-The app's server is defined in `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
+## The Application Server
+
+The app's nodejs-based server is defined in `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
 
 `node server.js /foo/bar/images/`
 
 By default this server runs on port 3100. The command line parameter shown in the example above defines the directory the server will write image files to. Note that this directory should exist and should also have subdirectories called `processed` and `stored` beneath it. The `processed` directory is used by the image recognition service to store processed images (see below). The `stored` directory is used by the application server to create copies of the source images and a matching [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) XML metadata file based on the returned detection results that can be used for further image training refinement if desired.
+
+### Services
+The nodejs server creates several endpoints used in the demo:
+
+|Service Name       |Description                                                  |
+|-------------------|-------------------------------------------------------------|
+|`/analyseimage`    |POST request to analyse a JPEG Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
+|`/storeimage`      |POST request that stores a JPEG Base64 encoded image in a directory local to the server. Returns success or failure. |
+
+## Demo Client
 
 The client is in the `public` directory. To start it, type the following into a Chrome browser:
 
@@ -47,11 +59,4 @@ Keys to access the [Google Maps](https://developers.google.com/maps/documentatio
 |`public/directions_api_key.txt` |Holds the API key for the Google Directions API |
 |`public/tile_api_key.txt`       |Holds the API for the Google Tile API           |
 
-## Services
-The nodejs server creates several endpoints used in the demo:
-
-|Service Name       |Description                                                  |
-|-------------------|-------------------------------------------------------------|
-|`/analyseimage`    |POST request to analyse a JPEG Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
-|`/storeimage`      |POST request that stores a JPEG Base64 encoded image in a directory local to the server. Returns success or failure. |
 
