@@ -58,7 +58,7 @@ Create a PYTHONPATH variable while in `google_maptiles_demo/Custom-Object-Detect
 
 Load all the Python dependencies using pip. Note that one of the dependencies is for the web component - you can find instructions on how to load this at http://webpy.org/.
 
-## Google API Keys
+### Google API Keys
 Keys to access the [Google Maps](https://developers.google.com/maps/documentation/javascript/tutorial), [Directions](https://developers.google.com/maps/documentation/directions/intro) and [Tile](https://developers.google.com/maps/documentation/tile/) APIs are required to run the app. These should be obtained from Google and stored in text files named according to the API in the `public` directory as follows:
 
 |Filename                        |Description                                     |
