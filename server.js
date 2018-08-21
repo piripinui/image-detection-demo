@@ -410,6 +410,7 @@ function createAnnotation(filename, dir, detectionData, width, height) {
 
 app.post('/analyseimage', function (req, res) {
   
+	logger.info("analyseimage request received from " + req.headers.referer);
 	var mt = base64MimeType(req.body);  
 	var filename;
 	var d = new Date();
