@@ -25,13 +25,15 @@ from utils import label_map_util
 
 from multiprocessing.dummy import Pool as ThreadPool
 
+logging.basicConfig(filename="logs/log.txt", format='%(asctime)s %(message)s', level=logging.DEBUG)
+
 MAX_NUMBER_OF_BOXES = 10
 MINIMUM_CONFIDENCE = 0.9
 
 PATH_TO_LABELS = 'pole_annotations/label_map.pbtxt'
 PATH_TO_TEST_IMAGES_DIR = sys.argv[2];
 
-print("Image directory = " + PATH_TO_TEST_IMAGES_DIR);
+logging.info("Image directory = " + PATH_TO_TEST_IMAGES_DIR);
 
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=sys.maxsize, use_display_name=True)
@@ -52,6 +54,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
     global boxes
 	
     image = Image.open(image_path)
+    logging.info("Processing " + image_path)
 
     image_np = load_image_into_numpy_array(image)
     image_np_expanded = np.expand_dims(image_np, axis=0)
@@ -87,7 +90,7 @@ def detect_objects(image_path, sess, image_tensor, detection_boxes, detection_sc
     plt.close(fig)
 
 # Load model into memory
-print('Loading model...')
+logging.info('Loading model...')
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
@@ -100,7 +103,7 @@ sess = tf.Session(graph=detection_graph)
 
 def startDetection():
     global sess
-    print('Detecting...')
+    logging.info('Running detection...')
     
     with detection_graph.as_default():
         #with tf.Session(graph=detection_graph) as sess:
@@ -112,12 +115,12 @@ def startDetection():
             num_detections = detection_graph.get_tensor_by_name('num_detections:0')
             TEST_IMAGE_PATHS = glob.glob(os.path.join(PATH_TO_TEST_IMAGES_DIR, '*.jpg'))
             t1 = time.time()
-            logging.debug("Setup time = ", str(t1 - t0))
+            logging.info("Detection setup time = " + str(t1 - t0))
             for image_path in TEST_IMAGE_PATHS:
                 detect_objects(image_path, sess, image_tensor, detection_boxes, detection_scores, detection_classes, num_detections)
 
 # Set up the web server.	
-print("Starting web server...")	
+logging.info("Starting web server...")	
 urls = (
   '/startdetection', 'startdetection'
 )
@@ -168,14 +171,14 @@ class startdetection:
     
     def GET(self):
         global app
-        print("Responding to detection request...")
+        logging.info("Responding to detection request...")
         t0 = time.time()
 
         try:
             startDetection()
             t1 = time.time()
             total = t1-t0
-		
+            logging.info("Total detection time = " + str(total))
             results = "{\"classes\":["
 		
             results += getClasses(CATEGORY_INDEX)
@@ -183,7 +186,8 @@ class startdetection:
             results += "],\"elapsed_time\":" + str(total) + "}"		
 		
             return str(results)
-        except ValueError:
+        except ValueError as err:
+            logging.debug("Value error: {0}".format(err) + " - returning server error 500.")
             raise web.internalerror()
 				
 if __name__ == "__main__":		
