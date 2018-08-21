@@ -336,7 +336,7 @@ app.post('/storeimage', function (req, res) {
 			}).then((files) => {		
 				var newFn = fullFilename.replace("png", "jpg");
 				fs.rename(fullFilename, newFn, function(err) {
-					if ( err ) console.log('ERROR: ' + err);
+					if ( err ) logger.error('ERROR: ' + err);
 					logger.info("Renamed " + fullFilename + " to " + newFn + "...stored in Custom-Object-Detection/pole_images.");
 					var result = {};
 					
@@ -457,7 +457,6 @@ app.post('/analyseimage', function (req, res) {
 				res.status(500).end();
 			else {
 				var fullFilename = imageDir + filename;
-				logger.info("File " + fullFilename);
 				
 				imagemin([fullFilename], imageDir, {
 					plugins: [
@@ -466,7 +465,7 @@ app.post('/analyseimage', function (req, res) {
 				}).then((files) => {
 					var newFn = fullFilename.replace("png", "jpg");
 					fs.rename(fullFilename, newFn, function(err) {
-						if ( err ) console.log('ERROR: ' + err);
+						if ( err ) logger.error('ERROR: ' + err);
 						logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
 						
 						request({
