@@ -52,6 +52,6 @@ The nodejs server creates several endpoints used in the demo:
 
 |Service Name       |Description                                                  |
 |-------------------|-------------------------------------------------------------|
-|`/analyseimage`    |POST request to analyse a Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
-|`/storeimage`      |POST request that stores a Base64 encoded image in a directory local to the server. Returns success or failure. |
+|`/analyseimage`    |POST request to analyse a JPEG Base64 encoded image in order to detect utility equipment. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |
+|`/storeimage`      |POST request that stores a JPEG Base64 encoded image in a directory local to the server. Returns success or failure. |
 
