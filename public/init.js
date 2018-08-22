@@ -360,9 +360,25 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 		createDownloadLink();
 }
 
-async function doAnalyse(evt, dfd) {
+async function doAnalyse(evt, position, bearing, dfd) {
 	// Sleep to give streetview time to render image.
 	await sleep(800);
+	
+	if (!position) {
+		var pos = panorama.getPosition();
+		position = {
+			lat: pos.lat(),
+			lng: pos.lng()
+		}
+	}
+	else {
+		position = {
+			lat: position[1],
+			lng: position[0]
+		}
+	}
+	if (!bearing)
+		bearing = getHeading();
 	
 	var cvs = $(".widget-scene-canvas");
 	var data = cvs[cvs.length - 1];
@@ -381,11 +397,18 @@ async function doAnalyse(evt, dfd) {
 	
 	$("#analysis").append('<div class="loader">Processing...</div>');
 	
+	var imageInfo = {
+		base64Data: data.toDataURL(),
+		position: position,
+		bearing: bearing
+	};
+	
 	$.ajax({
 		url: "/analyseimage",
 		type: "POST",
-		contentType: "application/base64",
-		data: data.toDataURL(),
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(imageInfo),
+		dataType: 'json',
 		success: function(result) {
 			console.log("Image analysis request successful (elapsed time = " + result.elapsed_time + ")");
 			processedData = result.data;
@@ -647,7 +670,7 @@ function doFollowRoute() {
 				var svPromise = showStreetview(coord);
 				
 				svPromise.then(function() {
-					doAnalyse(null, dfd);
+					doAnalyse(null, coord, bearing, dfd);
 				});
 				return dfd;
 			});

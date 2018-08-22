@@ -283,6 +283,11 @@ app.use(bodyParser.text({
 	limit: "5MB"
 }));
 
+app.use(bodyParser.text({
+	type: "application/json",
+	limit: "5MB"
+}));
+
 function base64MimeType(encoded) {
   var result = null;
 
@@ -411,7 +416,8 @@ function createAnnotation(filename, dir, detectionData, width, height) {
 app.post('/analyseimage', function (req, res) {
   
 	logger.info("analyseimage request received from " + req.headers.referer);
-	var mt = base64MimeType(req.body);  
+	var bodyData = JSON.parse(req.body);
+	var mt = base64MimeType(bodyData.base64Data);  
 	var filename;
 	var d = new Date();
 	var fnPrefix = (d.getTime() / 1000).toString();
@@ -426,9 +432,9 @@ app.post('/analyseimage', function (req, res) {
 		default:
 			break;
 	}
-  
-	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
-	var buf = new Buffer(data, 'base64');
+	
+	imgData = bodyData.base64Data.replace(/^data:image\/\w+;base64,/, "");
+	var buf = new Buffer(imgData, 'base64');
 	
 	// Before writing the image out, check there are no existing JPEG files in the image directory. If
 	// there are, delete them first.
@@ -519,11 +525,29 @@ app.post('/analyseimage', function (req, res) {
 											var annoFile = imageDir + "/stored/" + fn.replace("jpg", "xml");
 											fs.writeFile(annoFile, anno, (err, data) => {
 												if (err) {
+													logger.error("Problem writing file " + annoFile);
 													res.status(500).end();
 													return;
 												}
 												else 
-													logger.info("File " + annoFile + " written successfully");
+													logger.info("VOC file " + annoFile + " written successfully");
+											});
+											
+											// Create metadata file for position and bearing.
+											var locFile = imageDir + "/stored/" + fn.replace("jpg", "json");
+											var posData = {
+												lat: bodyData.position.lat,
+												lng: bodyData.position.lng,
+												heading: bodyData.bearing	
+											};
+											fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
+												if (err) {
+													logger.error("Problem writing file " + locFile);
+													res.status(500).end();
+													return;
+												}
+												else 
+													logger.info("Position metadata file " + locFile + " written successfully");
 											});
 
 											// Return the annotated file back to the requesting client along with the detection metadata.
