@@ -10,7 +10,7 @@ The app's nodejs-based server is defined in `server.js`. It acts as the web serv
 
 `node server.js /foo/bar/images/`
 
-By default this server runs on port 3100. The command line parameter shown in the example above defines the directory the server will write image files to. Note that this directory should exist and should also have subdirectories called `processed` and `stored` beneath it. The `processed` directory is used by the image recognition service to store processed images (see below). The `stored` directory is used by the application server to create copies of the source images and a matching [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) XML metadata file based on the returned detection results that can be used for further image training refinement if desired.
+By default this server runs on port 3100 but it can be changed by setting the PORT environment variable. The command line parameter shown in the example above defines the directory the server will write image files to. Note that this directory should exist and should also have subdirectories called `processed` and `stored` beneath it. The `processed` directory is used by the image recognition service to store processed images (see below). The `stored` directory is used by the application server to create copies of the source images and a matching [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) XML metadata file based on the returned detection results that can be used for further image training refinement if desired.
 
 ### Services
 The nodejs server creates several endpoints used in the demo:
