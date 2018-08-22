@@ -17,7 +17,7 @@ The nodejs server creates several endpoints used in the demo:
 
 |Service Name       |Description                                                  |Body|
 |-------------------|-------------------------------------------------------------|----|
-|`/analyseimage`    |POST request to analyse a JSON object that contains a JPEG Base64 encoded image plus position/bearing info in order to detect utility equipment from the image. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |JSON object with 3 properties lat, lng and base64Data for the image data |
+|`/analyseimage`    |POST request to analyse a JSON object that contains a JPEG Base64 encoded image plus position/bearing info in order to detect utility equipment from the image. Returns a JSON object containing the image with detected objects overlaid plus bounding metadata for each detection area. |JSON object with 3 properties `lat`, `lng` and `base64Data` for the image data |
 |`/storeimage`      |POST request that stores a JPEG Base64 encoded image in a directory local to the server. Returns success or failure. |Base64 encoded image|
 |`/getdirections`   |GET request that asks the [Google Directions API](https://developers.google.com/maps/documentation/directions/start) to retrieve quickest route between a start and an end coordinate. The two coordinates are specified as decimal degree latlons using the parameters `origin` and `destination`. Returns a GeoJSON feature containing a LineString representing the route.|N/A|
 
