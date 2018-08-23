@@ -365,11 +365,11 @@ class ImageDetectionProcessor {
 												else {
 													processor.logger.info("File " + srcFile + " moved to /stored");
 													
-													var jpegData = jpeg.decode(imgData, true);
+													const jpegData = jpeg.decode(imgData, true);
 													
 													// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
-													var anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
-													var annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
+													const anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
+													const annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
 													fs.writeFile(annoFile, anno, (err, data) => {
 														if (err) {
 															processor.logger.error("Problem writing file " + annoFile);
@@ -381,8 +381,8 @@ class ImageDetectionProcessor {
 													});
 													
 													// Create metadata file for position and bearing.
-													var locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
-													var posData = {
+													const locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
+													const posData = {
 														lat: bodyData.position.lat,
 														lng: bodyData.position.lng,
 														heading: bodyData.bearing	
