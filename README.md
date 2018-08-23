@@ -6,7 +6,7 @@ The map client is defined in the public directory. It is a basic [Openlayers](ht
 
 ## The Application Server
 
-The app's nodejs-based server is defined in `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
+The app's nodejs-based server is defined in `ImageDetectionProcessor.js` and started by `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
 
 `node server.js /foo/bar/images/`
 
