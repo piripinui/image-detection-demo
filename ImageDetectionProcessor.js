@@ -285,7 +285,7 @@ class ImageDetectionProcessor {
 			// Before writing the image out, check there are no existing JPEG files in the image directory. If
 			// there are, delete them first.
 			
-			var aPromise = new Promise(function (resolve, reject) {
+			const aPromise = new Promise(function (resolve, reject) {
 				fs.readdir(processor.imageDir, function(err, files) {
 					for (let i = 0; i < files.length; i++) {
 						var aFile = files[i];
@@ -316,7 +316,7 @@ class ImageDetectionProcessor {
 								pngToJpeg({quality: 90})
 							]
 						}).then((files) => {
-							var newFn = fullFilename.replace("png", "jpg");
+							const newFn = fullFilename.replace("png", "jpg");
 							fs.rename(fullFilename, newFn, function(err) {
 								if ( err ) processor.logger.error('ERROR: ' + err);
 								processor.logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
@@ -352,9 +352,9 @@ class ImageDetectionProcessor {
 											return;
 										}
 										else {
-											var fn = filename.replace("png", "jpg");
-											var srcFile = path.join(processor.imageDir, fn);
-											var storeFile = path.join(processor.imageDir, "stored", fn);
+											const fn = filename.replace("png", "jpg");
+											const srcFile = path.join(processor.imageDir, fn);
+											const storeFile = path.join(processor.imageDir, "stored", fn);
 											// Move source image to stored images with annotations in a subdirectory called "stored".
 											fs.rename(srcFile, storeFile, (err, data) => {
 												if (err) {
