@@ -23,7 +23,7 @@ The nodejs server creates several endpoints used in the demo:
 
 ## Demo Client
 
-The client is in the `public` directory. To start it, type the following into a Chrome browser:
+The client is in the `public` directory and is served up by the nodejs server. To start it, type the following into a Chrome browser:
 
 `http://localhost:3100/image-detection-demo.html`
 
