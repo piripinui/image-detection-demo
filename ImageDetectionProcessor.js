@@ -30,11 +30,6 @@ class ImageDetectionProcessor {
 		const processor = this;
 		this.initialiseLogger();
 		
-		var logger = this.logger;
-		var tileApiKey = this.tileApiKey;
-		var mapApiKey = this.mapApiKey;
-		var directionsApiKey = this.directionsApiKey;
-		
 		this.app.use(express.static(path.join(__dirname, 'public')));
 
 		this.app.use(helmet());
@@ -103,13 +98,13 @@ class ImageDetectionProcessor {
 		
 		this.app.get('/initstreetviewsession*', function (req, res) {
 			// Creates the streetview session token and returns it to the requestor.
-			var pattern = new urlPattern(
+			const pattern = new urlPattern(
 				  "/initstreetviewsession"
 				);
 				
-			var results = pattern.match(req.url);
+			const results = pattern.match(req.url);
 			
-			var aPromise = processor.getStreetviewSession();
+			const aPromise = processor.getStreetviewSession();
 			
 			aPromise
 			.then(function() {
@@ -120,12 +115,12 @@ class ImageDetectionProcessor {
 		});
 		
 		this.app.get('/initstreetview*', function (req, res) {
-			var pattern = new urlPattern(
+			const pattern = new urlPattern(
 				  /^\/initstreetview\?lat=([-+]?[0-9]*\.?[0-9]+)&lon=([-+]?[0-9]*\.?[0-9]+)$/,
 				  ['lat', 'lon']
 				);
 				
-			var results = pattern.match(req.url);
+			const results = pattern.match(req.url);
 			
 			processor.initialiseStreetview(req, res, results)
 			.then(function() {
@@ -152,14 +147,14 @@ class ImageDetectionProcessor {
 		});
 		
 		this.app.get('/getdirections', function(req, res) {	
-			var pattern = new urlPattern(
+			const pattern = new urlPattern(
 				/\/getdirections\?origin=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)\&destination=([-+]?[0-9]*\.?[0-9]+)\,([-+]?[0-9]*\.?[0-9]+)/,
 				['originLat', 'originLon', 'destLat', 'destLon']
 			);
 			
 			pattern.isRegex = true;
 				
-			var results = pattern.match(req.url);
+			const results = pattern.match(req.url);
 			
 			if (results) {
 				request({
@@ -201,9 +196,9 @@ class ImageDetectionProcessor {
 		});
 		
 		this.app.post('/storeimage', function (req, res) { 
-			var mt = processor.base64MimeType(req.body);  
+			const mt = processor.base64MimeType(req.body);  
 			var filename;
-			var d = new Date();
+			const d = new Date();
 			var fnPrefix = (d.getTime() / 1000).toString();
 		  
 			switch(mt) {
@@ -217,8 +212,8 @@ class ImageDetectionProcessor {
 					break;
 			}
 		  
-			var data = req.body.replace(/^data:image\/\w+;base64,/, "");
-			var buf = new Buffer(data, 'base64');
+			const data = req.body.replace(/^data:image\/\w+;base64,/, "");
+			const buf = new Buffer(data, 'base64');
 		  
 			var fullFilename = path.join("Custom-Object-Detection", "pole_images", filename);
 			
@@ -267,10 +262,10 @@ class ImageDetectionProcessor {
 		
 		this.app.post('/analyseimage', function (req, res) {
 			processor.logger.info("analyseimage request received from " + req.headers.referer);
-			var bodyData = JSON.parse(req.body);
-			var mt = processor.base64MimeType(bodyData.base64Data);  
+			const bodyData = JSON.parse(req.body);
+			const mt = processor.base64MimeType(bodyData.base64Data);  
 			var filename;
-			var d = new Date();
+			const d = new Date();
 			var fnPrefix = (d.getTime() / 1000).toString();
 		  
 			switch(mt) {
@@ -284,8 +279,8 @@ class ImageDetectionProcessor {
 					break;
 			}
 			
-			var imgData = bodyData.base64Data.replace(/^data:image\/\w+;base64,/, "");
-			var buf = new Buffer(imgData, 'base64');
+			const imgData = bodyData.base64Data.replace(/^data:image\/\w+;base64,/, "");
+			const buf = new Buffer(imgData, 'base64');
 			
 			// Before writing the image out, check there are no existing JPEG files in the image directory. If
 			// there are, delete them first.
@@ -435,7 +430,7 @@ class ImageDetectionProcessor {
 			return result;
 		}
 
-		var mime = encoded.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
+		const mime = encoded.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/);
 
 		if (mime && mime.length) {
 			result = mime[1];
@@ -447,7 +442,7 @@ class ImageDetectionProcessor {
 	getSession(options, maptype) {
 		const processor = this;
 		
-		var aPromise = new Promise(function (resolve, reject) {
+		const aPromise = new Promise(function (resolve, reject) {
 			
 			request({
 				uri : "https://www.googleapis.com/tile/v1/createSession?key=" + processor.tileApiKey,
@@ -493,7 +488,7 @@ class ImageDetectionProcessor {
 	getPanoId(locations) {
 		const processor = this;
 		
-		var aPromise = new Promise(function (resolve, reject) {
+		const aPromise = new Promise(function (resolve, reject) {
 			request({
 				uri: "https://www.googleapis.com/tile/v1/streetview/panoIds?key=" + processor.tileApiKey + "&session=" + processor.streetviewSessionToken,
 				method: "POST",
@@ -516,7 +511,7 @@ class ImageDetectionProcessor {
 	getStreetviewMetadata() {
 		const processor = this;
 		
-		var aPromise = new Promise(function(resolve, reject) {
+		const aPromise = new Promise(function(resolve, reject) {
 			request({
 				uri: "https://www.googleapis.com/tile/v1/streetview/metadata?key=" + processor.tileApiKey + "&panoId=" + processor.streetviewPanos.panoIds[0] + "&session=" + processor.streetviewSessionToken,
 				method: "GET",
@@ -541,7 +536,7 @@ class ImageDetectionProcessor {
 	initialiseStreetview(req, res, results) {
 		const processor = this;
 		// Get a pano id based on the coordinates in results.
-		var locations = {
+		const locations = {
 			'locations' : [
 				{
 					'lat' : results.lat,
@@ -551,7 +546,7 @@ class ImageDetectionProcessor {
 			'radius' : 50
 		};
 		
-		var panoPromise = this.getPanoId(locations);
+		const panoPromise = this.getPanoId(locations);
 		
 		// Get the Streetview metadata.
 		
