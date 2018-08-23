@@ -25,7 +25,7 @@ The nodejs server creates several endpoints used in the demo:
 
 The client is in the `public` directory. To start it, type the following into a Chrome browser:
 
-`http://localhost:3100/ol3-example.html`
+`http://localhost:3100/image-detection-demo.html`
 
 ## The Image Recognition Service
 The image recognition is based on a Tensorflow image recognition example you can find here...
