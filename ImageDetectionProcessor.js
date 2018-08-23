@@ -34,7 +34,7 @@ class ImageDetectionProcessor {
 
 		this.app.use(helmet());
 		this.app.listen(this.listenPort, function () {
-			processor.logger.info('google_maptiles_demo app listening on port ' + this.listenPort + '!');
+			processor.logger.info('Image Detection Server listening on port ' + processor.listenPort + '!');
 		});
 		
 		fs.readFile(path.join("public", "tile_api_key.txt"), function(err, data) {
@@ -229,7 +229,7 @@ class ImageDetectionProcessor {
 						var newFn = fullFilename.replace("png", "jpg");
 						fs.rename(fullFilename, newFn, function(err) {
 							if ( err ) processor.logger.error('ERROR: ' + err);
-							processor.logger.info("Renamed " + fullFilename + " to " + newFn + "...stored in Custom-Object-Detection/pole_images.");
+
 							var result = {};
 							
 							fs.readFile(fullFilename.replace("png", "jpg"), (err, data) => {
