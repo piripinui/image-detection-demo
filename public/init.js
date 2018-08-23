@@ -421,12 +421,20 @@ async function doAnalyse(evt, position, bearing, dfd) {
 			if ($("#object_table"))
 				$("#object_table").remove();
 			
-			tab = '<table id="object_table"><tr><th>Equipment</th><th>Probability</th>';
+			tab = '<table id="object_table"><tr><th>Equipment</th><th>Probability</th><th>Heading</th>';
 			
 			for (i = 0; i < result.classes.length; i++) {
 				var type = result.classes[i].type;
 				var percent = result.classes[i].probability;
-				tab += "<tr><td>" + type + "</td><td>" + percent + "</td></tr>";
+				
+				// Figure out direction of identified object.
+				var xmin = Math.round(result.classes[i].xmin * result.imgWidth);
+				var xmax = Math.round(result.classes[i].xmax * result.imgWidth);
+				var xmid = xmin + (xmax - xmin) / 2;
+				var angRatio = 90 / result.imgWidth;
+				var ang = xmid * angRatio;
+				
+				tab += "<tr><td>" + type + "</td><td>" + percent + "</td><td>" + ang.toFixed(2) + "°</td></tr>";
 				
 				// Add markers.
 				switch(type) {
