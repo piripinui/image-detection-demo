@@ -441,8 +441,9 @@ app.post('/analyseimage', function (req, res) {
 				
 				if (found) {
 					// Got a jpg file - delete it.
-					logger.info("Deleting file: " + imageDir + "/" + aFile);
-					fs.unlinkSync(imageDir + aFile);
+					var fn = path.join(imageDir, aFile);
+					logger.info("Deleting file: " + fn);
+					fs.unlinkSync(fn);
 				}
 			}
 			
@@ -455,7 +456,7 @@ app.post('/analyseimage', function (req, res) {
 			if (err) 
 				res.status(500).end();
 			else {
-				var fullFilename = imageDir + filename;
+				var fullFilename = path.join(imageDir, filename);
 				
 				imagemin([fullFilename], imageDir, {
 					plugins: [
