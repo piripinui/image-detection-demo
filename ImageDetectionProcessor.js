@@ -175,7 +175,7 @@ class ImageDetectionProcessor {
 							txCoords.push([coords[i][1], coords[i][0]]);
 						}
 						
-						var overviewLine = {
+						const overviewLine = {
 							type: "Feature",
 							properties: {},
 							geometry: {
