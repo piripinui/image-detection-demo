@@ -318,7 +318,7 @@ class ImageDetectionProcessor {
 						}).then((files) => {
 							var newFn = fullFilename.replace("png", "jpg");
 							fs.rename(fullFilename, newFn, function(err) {
-								if ( err ) logger.error('ERROR: ' + err);
+								if ( err ) processor.logger.error('ERROR: ' + err);
 								processor.logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
 								
 								request({
