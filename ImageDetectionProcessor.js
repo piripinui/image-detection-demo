@@ -168,8 +168,8 @@ class ImageDetectionProcessor {
 						res.status(500).end();
 					}
 					else {
-						var coords = polyline.decode(data.routes[0].overview_polyline.points);
-						var txCoords = [];
+						const coords = polyline.decode(data.routes[0].overview_polyline.points);
+						const txCoords = [];
 						
 						for (let i = 0; i < coords.length; i++) {
 							txCoords.push([coords[i][1], coords[i][0]]);
