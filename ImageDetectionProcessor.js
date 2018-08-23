@@ -409,6 +409,8 @@ class ImageDetectionProcessor {
 														return;
 													}
 													result.data = buf;
+													result.imgWidth = jpegData.width;
+													result.imgHeight = jpegData.height;
 													res.writeHead(200, {'Content-Type': 'application/json'});
 													res.end(JSON.stringify(result));
 												}
