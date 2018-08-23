@@ -266,7 +266,7 @@ class ImageDetectionProcessor {
 			const mt = processor.base64MimeType(bodyData.base64Data);  
 			var filename;
 			const d = new Date();
-			var fnPrefix = (d.getTime() / 1000).toString();
+			const fnPrefix = (d.getTime() / 1000).toString();
 		  
 			switch(mt) {
 				case 'image/png':
