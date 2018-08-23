@@ -49,6 +49,13 @@ The Tensorflow-based server creates a single endpoint used in the demo:
 |`/startdetection`    |GET request to analyse a JPEG file placed into a nominated directory in order to detect utility equipment. Returns a JSON string containing information about what was detected and creates processed image showing the detected objects in the a subdirectory called `processed` beneath the nominated directory. |
 
 ## Installation
+
+### Nodejs Server
+
+Do an `npm install`
+
+### Tensorflow Server
+
 For the image recognition services, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths:
 
 Update the PATH variable as required by Python.
