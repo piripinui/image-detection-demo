@@ -1,4 +1,4 @@
-# google_maptile_demo
+# image-detection-demo
 
 This app demonstrates how a map-based client would use a Machine Learning-based image recognition service to find utility equipment (specifically poles, transformers and streetlights) from panoramic imagery (in this case, Google Streetview).
 
