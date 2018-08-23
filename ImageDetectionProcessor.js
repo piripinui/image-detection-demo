@@ -1,4 +1,4 @@
-var express = require('express'),
+const express = require('express'),
 request = require('request'),
 app = express(),
 fs = require('fs'),
