@@ -27,7 +27,7 @@ class ImageDetectionProcessor {
 	}
 	
 	initialise() {		
-		var processor = this;
+		const processor = this;
 		this.initialiseLogger();
 		
 		var logger = this.logger;
@@ -89,7 +89,7 @@ class ImageDetectionProcessor {
 	}
 	
 	initialiseEndpoints() {
-		var processor = this;
+		const processor = this;
 				
 		this.app.use(bodyParser.text({
 			type: "application/base64",
@@ -176,7 +176,7 @@ class ImageDetectionProcessor {
 						var coords = polyline.decode(data.routes[0].overview_polyline.points);
 						var txCoords = [];
 						
-						for (var i = 0; i < coords.length; i++) {
+						for (let i = 0; i < coords.length; i++) {
 							txCoords.push([coords[i][1], coords[i][0]]);
 						}
 						
@@ -292,7 +292,7 @@ class ImageDetectionProcessor {
 			
 			var aPromise = new Promise(function (resolve, reject) {
 				fs.readdir(processor.imageDir, function(err, files) {
-					for (var i = 0; i < files.length; i++) {
+					for (let i = 0; i < files.length; i++) {
 						var aFile = files[i];
 						
 						var found = aFile.match(/jp[e]?g/g);
@@ -445,7 +445,7 @@ class ImageDetectionProcessor {
 	}
 	
 	getSession(options, maptype) {
-		var processor = this;
+		const processor = this;
 		
 		var aPromise = new Promise(function (resolve, reject) {
 			
@@ -491,7 +491,7 @@ class ImageDetectionProcessor {
 	}
 	
 	getPanoId(locations) {
-		var processor = this;
+		const processor = this;
 		
 		var aPromise = new Promise(function (resolve, reject) {
 			request({
@@ -514,7 +514,7 @@ class ImageDetectionProcessor {
 	}
 
 	getStreetviewMetadata() {
-		var processor = this;
+		const processor = this;
 		
 		var aPromise = new Promise(function(resolve, reject) {
 			request({
@@ -539,7 +539,7 @@ class ImageDetectionProcessor {
 	}
 	
 	initialiseStreetview(req, res, results) {
-		var processor = this;
+		const processor = this;
 		// Get a pano id based on the coordinates in results.
 		var locations = {
 			'locations' : [
@@ -584,7 +584,7 @@ class ImageDetectionProcessor {
 		buf += "<source>\n<database>Unknown</database>\n</source>\n";
 		
 		
-		for (var i = 0; i < detectionData.classes.length; i++) {
+		for (let i = 0; i < detectionData.classes.length; i++) {
 			buf += "<object>\n";
 			buf	+= "<name>" + detectionData.classes[i].type + "</name>\n";
 
