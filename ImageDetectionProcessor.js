@@ -398,7 +398,8 @@ class ImageDetectionProcessor {
 													});
 
 													// Return the annotated file back to the requesting client along with the detection metadata.
-													var imgBuf = new Buffer(imgData);
+													const imgBuf = new Buffer(imgData);
+													
 													try {
 														var buf = imgBuf.toString('base64');
 													}
