@@ -41,8 +41,6 @@ if (!imageDir)
 
 logger.info("Writing images to " + imageDir);
 
-var resultDir = process.cwd() + "\\data";
-
 var listenPort = process.env.PORT || 3100;
 
 var streetviewOptions = {
@@ -213,15 +211,11 @@ app.get('/gettileapikey', function(req, res) {
 });
 
 app.get('/getmapsapikey', function(req, res) {
-	//console.log("Got Maps API key request: " + req.url);
-
 	res.send(mapsApiKey);
 	res.status(200).end();
 });
 
 app.get('/getdirectionsapikey', function(req, res) {
-	//console.log("Got Directions API key request: " + req.url);
-
 	res.send(directionsApiKey);
 	res.status(200).end();
 });
@@ -250,7 +244,6 @@ app.get('/getdirections', function(req, res) {
 				res.status(500).end();
 			}
 			else {
-				//console.log("Directions request succeeded");
 				var coords = polyline.decode(data.routes[0].overview_polyline.points);
 				var txCoords = [];
 				
@@ -325,7 +318,7 @@ app.post('/storeimage', function (req, res) {
 	var data = req.body.replace(/^data:image\/\w+;base64,/, "");
 	var buf = new Buffer(data, 'base64');
   
-	var fullFilename = "Custom-Object-Detection/pole_images/" + filename;
+	var fullFilename = path.join("Custom-Object-Detection", "pole_images", filename);
 	
 	fs.writeFile(fullFilename, buf, function(err) {
 		if (err) 
@@ -497,7 +490,7 @@ app.post('/analyseimage', function (req, res) {
 							// Return the processed image to the requestor but also store the source image with Pascal VOC XML metadata based
 							// on the detection results.
 							
-							var targetFile = imageDir + 'processed/' + filename.replace("png", "jpg");
+							var targetFile = path.join(imageDir, 'processed', filename.replace("png", "jpg"));
 						  
 							fs.readFile(targetFile, (err, imgData) => {
 								if (err) {
@@ -506,8 +499,8 @@ app.post('/analyseimage', function (req, res) {
 								}
 								else {
 									var fn = filename.replace("png", "jpg");
-									var srcFile = imageDir + fn;
-									var storeFile = imageDir + "stored/" + fn;
+									var srcFile = path.join(imageDir, fn);
+									var storeFile = path.join(imageDir, "stored", fn);
 									// Move source image to stored images with annotations in a subdirectory called "stored".
 									fs.rename(srcFile, storeFile, (err, data) => {
 										if (err) {
@@ -522,7 +515,7 @@ app.post('/analyseimage', function (req, res) {
 											
 											// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
 											var anno = createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
-											var annoFile = imageDir + "/stored/" + fn.replace("jpg", "xml");
+											var annoFile = path.join(imageDir, "stored", fn.replace("jpg", "xml"));
 											fs.writeFile(annoFile, anno, (err, data) => {
 												if (err) {
 													logger.error("Problem writing file " + annoFile);
@@ -534,7 +527,7 @@ app.post('/analyseimage', function (req, res) {
 											});
 											
 											// Create metadata file for position and bearing.
-											var locFile = imageDir + "/stored/" + fn.replace("jpg", "json");
+											var locFile = path.join(imageDir, "stored", fn.replace("jpg", "json"));
 											var posData = {
 												lat: bodyData.position.lat,
 												lng: bodyData.position.lng,
@@ -580,17 +573,17 @@ app.listen(listenPort, function () {
 });
 
 function initialise() {
-	fs.readFile("public/tile_api_key.txt", function(err, data) {
+	fs.readFile(path.join("public", "tile_api_key.txt"), function(err, data) {
 		if (err) throw err;
 		
 		tileApiKey = data;
 	});
-	fs.readFile("public/maps_api_key.txt", function(err, data) {
+	fs.readFile(path.join("public", "maps_api_key.txt"), function(err, data) {
 		if (err) throw err;
 		
 		mapsApiKey = data;
 	});
-	fs.readFile("public/directions_api_key.txt", function(err, data) {
+	fs.readFile(path.join("public", "directions_api_key.txt"), function(err, data) {
 		if (err) throw err;
 		
 		directionsApiKey = data;
