@@ -339,12 +339,12 @@ class ImageDetectionProcessor {
 									
 									processor.logger.info("Start detection request succeeded..." + data);
 									
-									var result = JSON.parse(data);
+									const result = JSON.parse(data);
 
 									// Return the processed image to the requestor but also store the source image with Pascal VOC XML metadata based
 									// on the detection results.
 									
-									var targetFile = path.join(processor.imageDir, 'processed', filename.replace("png", "jpg"));
+									const targetFile = path.join(processor.imageDir, 'processed', filename.replace("png", "jpg"));
 								  
 									fs.readFile(targetFile, (err, imgData) => {
 										if (err) {
