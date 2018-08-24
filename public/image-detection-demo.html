@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Google Map Tile API Example</title>
-	<link rel="icon" href="logo.jpg">
+	<link rel="icon" href="logo.ico">
     <link rel="stylesheet" href="ol.css" type="text/css">
 	<link rel="stylesheet" href="spinner.css" type="text/css">
     <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
@@ -55,7 +55,7 @@
 		#objects {
 			position: absolute;
 			margin-left: 5px;
-			margin-top: 60px;
+			margin-top: 90px;
 			z-index: 1000;
 			font-family: Arial
 		}
@@ -71,13 +71,38 @@
 			width: 150px;
 			z-index: 999;
 		}
-		
-		#sweep {
+			
+		#setfov {
 			position: absolute;
-			margin-top: 210px;
+			margin-top: 57px;
 			margin-left: 5px;
 			width: 150px;
 			z-index: 999;
+			font-family: Arial;
+		}
+		
+		#fovlabel {
+			background-color:#F2F2F2;
+			opacity: 0.75;
+			padding:0.35em 1.2em;
+			border:0.1em solid #FFFFFF;
+			margin:0 0.3em 0.3em 0;
+			border-radius:0.12em;
+			position: absolute;
+			font-family: 'Arial',sans-serif;
+			font-weight: 300;
+			font-size: 0.75vw;
+		}
+		
+		#fov {
+			background-color:#F2F2F2;
+			opacity: 0.75;
+			padding:0.35em 1.2em;
+			border:0.1em solid #FFFFFF;
+			margin:0 0.3em 0.3em 0;
+			border-radius:0.12em;
+			position: absolute;
+			margin-left: 100px;
 		}
 		
 		#capture {
@@ -278,6 +303,7 @@
 		<div id="street-view"></div>
 		<div id="analysis">
 			<a id="analyse" class="button1">Analyse Current Streetview...</a>
+			<div id="setfov" class="button1"><label id="fovlabel">Set FOV</label><input id="fov" value="90"></input></div>
 			<div id="results"></div>
 			<div id="objects"></div>
 			<!--button id="sweep" type="button">Press to Sweep...</button-->

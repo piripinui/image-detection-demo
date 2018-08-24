@@ -1,6 +1,7 @@
 var sessionToken,
 map,view, markerFeature, markerSource, poleSource, heading,
 routeSource, routeStyle, currentRoute, followBearing,
+intersectVectors,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord, startFeature, endFeature,
@@ -360,6 +361,34 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 		createDownloadLink();
 }
 
+function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
+	var xmin = Math.round(detectionClass.xmin * imgWidth);
+	var xmax = Math.round(detectionClass.xmax * imgWidth);
+	var xmid = xmin + (xmax - xmin) / 2;
+	var fov = 180 / Math.pow(2,panorama.getZoom());
+	$("#fov").val(fov);
+	var angRatio = fov / imgWidth;
+	var ang = xmid * angRatio - (fov / 2);
+	var heading = heading = panorama.getPov().heading;
+	
+	var direction = heading + ang;
+	var startPoint = turf.point([pos[0], pos[1]]);
+	var options = {
+		units: 'kilometers'
+	};
+	var vectorDist = 30 / 1000; // 30 metres.
+
+	if (direction > 180)
+		direction = -(360 - direction);
+	
+	var endPoint = turf.rhumbDestination(startPoint, vectorDist, direction, options);
+	var locVector = turf.lineString([startPoint.geometry.coordinates, endPoint.geometry.coordinates]);
+	
+	intersectVectors.features.push(locVector);
+
+	return locVector;	
+}
+
 async function doAnalyse(evt, position, bearing, dfd) {
 	// Sleep to give streetview time to render image.
 	await sleep(800);
@@ -431,42 +460,74 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmin = Math.round(result.classes[i].xmin * result.imgWidth);
 				var xmax = Math.round(result.classes[i].xmax * result.imgWidth);
 				var xmid = xmin + (xmax - xmin) / 2;
-				var angRatio = 90 / result.imgWidth;
-				var ang = xmid * angRatio;
+				//var fov = Number($("#fov").val());
+				var fov = 180 / Math.pow(2,panorama.getZoom()); 
+				$("#fov").val(fov);
+				var angRatio = fov / result.imgWidth;
+				var ang = xmid * angRatio - (fov / 2);
+				var gCoord= panorama.getPosition();
+				var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857');
+				var pos = [gCoord.lng(), gCoord.lat()];
+				var heading = panorama.getPov().heading;
 				
 				tab += "<tr><td>" + type + "</td><td>" + percent + "</td><td>" + ang.toFixed(2) + "°</td></tr>";
 				
 				// Add markers.
 				switch(type) {
 					case 'pole': 
-						var gCoord= panorama.getPosition();
-						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
-						poleFeature = new ol.Feature(new ol.geom.Point(coord));
+						poleFeature = new ol.Feature({
+							geometry: new ol.geom.Point(coord),
+							streetviewBearing: heading,
+							detectionBearing: ang
+						});
 						
 						var poleStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'pole_circle.png',
-									scale: 0.005,
-									rotation: Math.radians(panorama.getPov().heading)
+								src: 'pole_circle.png',
+								scale: 0.005,
+								rotation: Math.radians(heading)
 							})
 						});
 						poleFeature.setStyle(poleStyle);
 	
 						poleSource.addFeature(poleFeature);
 						
-						addFeaturesForDownload(poleFeature, gCoord, type);
+						addFeaturesForDownload(poleFeature, gCoord, type);	
+
+						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
+						
+						// Show the vector on the map.
+						var geojsonFormat = new ol.format.GeoJSON();
+						
+						var vecFeature = geojsonFormat.readFeature(locVector,
+						{
+							dataProjection: 'EPSG:4326',
+							featureProjection: 'EPSG:3857'
+						});
+						
+						var vecStyle = new ol.style.Style({
+							stroke: new ol.style.Stroke({
+								color: '#319FD3',
+								width: 2
+							}),
+						});
+						vecFeature.setStyle(vecStyle);
+						
+						poleSource.addFeature(vecFeature);
 						
 						break;
 					case 'streetlight': 
-						var gCoord= panorama.getPosition();
-						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
-						slFeature = new ol.Feature(new ol.geom.Point(coord));
+						slFeature = new ol.Feature({
+							geometry: new ol.geom.Point(coord),
+							streetviewBearing: bearing,
+							detectionBearing: ang
+						});
 						
 						var slStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'streetlight.png',
-									scale: 0.01,
-									rotation: Math.radians(panorama.getPov().heading)
+								src: 'streetlight.png',
+								scale: 0.01,
+								// rotation: Math.radians(panorama.getPov().heading).
 							})
 						});
 						slFeature.setStyle(slStyle);
@@ -477,15 +538,17 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						
 						break;
 					case 'transformer':
-						var gCoord= panorama.getPosition();
-						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
-						txFeature = new ol.Feature(new ol.geom.Point(coord));
+						txFeature = new ol.Feature({
+							geometry: new ol.geom.Point(coord),
+							streetviewBearing: bearing,
+							detectionBearing: ang
+						});
 						
 						var txStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'tx_arrow.png',
-									scale: 0.05,
-									rotation: Math.radians(panorama.getPov().heading)
+								src: 'tx_arrow.png',
+								scale: 0.05,
+								rotation: Math.radians(panorama.getPov().heading)
 							})
 						});
 						txFeature.setStyle(txStyle);
@@ -495,15 +558,17 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						
 						break;
 					case 'rusty_tx':
-						var gCoord= panorama.getPosition();
-						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
-						txFeature = new ol.Feature(new ol.geom.Point(coord));
+						txFeature = new ol.Feature({
+							geometry: new ol.geom.Point(coord),
+							streetviewBearing: bearing,
+							detectionBearing: ang
+						});
 						
 						var txStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'rusty_tx_arrow.png',
-									scale: 0.05,
-									rotation: Math.radians(panorama.getPov().heading)
+								src: 'rusty_tx_arrow.png',
+								scale: 0.05,
+								rotation: Math.radians(panorama.getPov().heading)
 							})
 						});
 						txFeature.setStyle(txStyle);
@@ -514,15 +579,17 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						
 						break;
 					case 'bad_tx':
-						var gCoord= panorama.getPosition();
-						var coord = ol.proj.transform([gCoord.lng(), gCoord.lat()], 'EPSG:4326', 'EPSG:3857'); ;
-						txFeature = new ol.Feature(new ol.geom.Point(coord));
+						txFeature = new ol.Feature({
+							geometry: new ol.geom.Point(coord),
+							streetviewBearing: bearing,
+							detectionBearing: ang
+						});
 						
 						var txStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'tx_bad.png',
-									scale: 0.05,
-									rotation: Math.radians(panorama.getPov().heading)
+								src: 'tx_bad.png',
+								scale: 0.05,
+								rotation: Math.radians(panorama.getPov().heading)
 							})
 						});
 						txFeature.setStyle(txStyle);
@@ -666,7 +733,9 @@ function doFollowRoute() {
 				featureProjection: 'EPSG:3857'
 		});
 		
-		var chunks = turf.lineChunk(JSON.parse(line), 10, {units: 'metres'});
+		var followIncrement = 10;
+		
+		var chunks = turf.lineChunk(JSON.parse(line), followIncrement, {units: 'metres'});
 		var tasks = []
 		
 		function createTask(coord, bearing) {
@@ -682,6 +751,11 @@ function doFollowRoute() {
 				});
 				return dfd;
 			});
+		};
+		
+		intersectVectors = {
+			type: "FeatureCollection",
+			features: []
 		};
 		
 		for (i = 0; i < chunks.features.length; i++) {
@@ -700,6 +774,49 @@ function doFollowRoute() {
 		tasks.reduce(function(cur, next) {
 			return cur.then(next);
 		}, $.Deferred().resolve()).then(function() {
+			// Loop over intersect vectors to find points.
+			
+			for (i = 0; i < intersectVectors.features.length - 1; i++) {
+				var line1 = intersectVectors.features[i];
+				for (j = i + 1; j < intersectVectors.features.length; j++) {
+					var line2 = intersectVectors.features[j];
+					
+					if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
+						var intersects = turf.lineIntersect(line1, line2);
+
+						if (intersects.features.length > 0) {
+							var intersectPoint = intersects.features[0];
+							var intersectStart = intersectPoint.geometry.coordinates[0];
+							var line1Start = line1.geometry.coordinates[0];
+
+							// Add as a feature to the map.
+							var geojsonFormat = new ol.format.GeoJSON();
+								
+							var vecFeature = geojsonFormat.readFeature(intersectPoint,
+							{
+								dataProjection: 'EPSG:4326',
+								featureProjection: 'EPSG:3857'
+							});
+							
+							var vecStyle = new ol.style.Style({
+								image: new ol.style.Icon({
+										src: 'calculated_route_icon.png',
+										scale: 0.02
+								})
+							});
+							vecFeature.setStyle(vecStyle);
+							
+							poleSource.addFeature(vecFeature);
+							
+							var marker = new google.maps.Marker({
+								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
+								map: panorama,
+								title: "Pole Intersection"
+							});
+						}
+					}
+				}
+			}
 			console.log("Following complete");
 		});
 	}
