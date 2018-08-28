@@ -365,11 +365,12 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var xmin = Math.round(detectionClass.xmin * imgWidth);
 	var xmax = Math.round(detectionClass.xmax * imgWidth);
 	var xmid = xmin + (xmax - xmin) / 2;
-	var fov = 180 / Math.pow(2,panorama.getZoom());
+	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
+	var fov = 180 / Math.pow(2, zoom);
 	$("#fov").val(fov);
 	var angRatio = fov / imgWidth;
 	var ang = xmid * angRatio - (fov / 2);
-	var heading = heading = panorama.getPov().heading;
+	var heading = panorama.getPov().heading;
 	
 	var direction = heading + ang;
 	var startPoint = turf.point([pos[0], pos[1]]);
@@ -383,6 +384,8 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	
 	var endPoint = turf.rhumbDestination(startPoint, vectorDist, direction, options);
 	var locVector = turf.lineString([startPoint.geometry.coordinates, endPoint.geometry.coordinates]);
+	
+	locVector.properties.routeheading = heading;
 	
 	intersectVectors.features.push(locVector);
 
@@ -782,37 +785,51 @@ function doFollowRoute() {
 					var line2 = intersectVectors.features[j];
 					
 					if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
+						// Only check if the intersection line is not co-incident.
 						var intersects = turf.lineIntersect(line1, line2);
 
 						if (intersects.features.length > 0) {
 							var intersectPoint = intersects.features[0];
-							var intersectStart = intersectPoint.geometry.coordinates[0];
-							var line1Start = line1.geometry.coordinates[0];
+							var start = turf.point(line1.geometry.coordinates[0]);
+							var end = turf.point(intersectPoint.geometry.coordinates);
+							var distance = turf.distance(start, end, { units: 'kilometers'});
+							var rb = turf.rhumbBearing(start, end);
+							var ang = 90 - (rb + 90 - line1.properties.routeheading);
+							var x = Math.abs(Math.cos(ang) * distance);
+							var y = Math.abs(Math.sin(ang) * distance);
+							var comp = Math.min(x, y);
 
-							// Add as a feature to the map.
-							var geojsonFormat = new ol.format.GeoJSON();
+							if (comp < 7 / 1000) {
+								console.log("Intersection point is too close - ignoring.");
+							}
+							else {
+								// Add as a feature to the map.
+								var geojsonFormat = new ol.format.GeoJSON();
+									
+								var vecFeature = geojsonFormat.readFeature(intersectPoint,
+								{
+									dataProjection: 'EPSG:4326',
+									featureProjection: 'EPSG:3857'
+								});
 								
-							var vecFeature = geojsonFormat.readFeature(intersectPoint,
-							{
-								dataProjection: 'EPSG:4326',
-								featureProjection: 'EPSG:3857'
-							});
-							
-							var vecStyle = new ol.style.Style({
-								image: new ol.style.Icon({
-										src: 'calculated_route_icon.png',
-										scale: 0.02
-								})
-							});
-							vecFeature.setStyle(vecStyle);
-							
-							poleSource.addFeature(vecFeature);
-							
-							var marker = new google.maps.Marker({
-								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
-								map: panorama,
-								title: "Pole Intersection"
-							});
+								var vecStyle = new ol.style.Style({
+									image: new ol.style.Icon({
+											src: 'calculated_route_icon.png',
+											scale: 0.02
+									})
+								});
+								vecFeature.setStyle(vecStyle);
+								
+								poleSource.addFeature(vecFeature);
+								
+								map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
+								
+								var marker = new google.maps.Marker({
+									position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
+									map: panorama,
+									title: "Pole Intersection"
+								});
+							}
 						}
 					}
 				}
