@@ -364,7 +364,9 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var xmin = Math.round(detectionClass.xmin * imgWidth);
 	var xmax = Math.round(detectionClass.xmax * imgWidth);
-	var xmid = xmin + (xmax - xmin) / 2;
+	// Use the min corner as position rather than the midpoint between the width of the pole.
+	//var xmid = xmin + (xmax - xmin) / 2;
+	var xmid = xmin;
 	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
 	var fov = 180 / Math.pow(2, zoom);
 	$("#fov").val(fov.toFixed(2));
@@ -803,7 +805,7 @@ function doFollowRoute() {
 								console.log("Intersection point is too close - ignoring.");
 							}
 							else {
-								// Remove intersection vector from array.
+								// Remove intersection vector from array so that it won't be processed later.
 								var index = intersectVectors.features.indexOf(line2);
 								if (index > -1)
 									intersectVectors.features.splice(index, 1);
