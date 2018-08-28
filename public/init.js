@@ -465,7 +465,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmid = xmin + (xmax - xmin) / 2;
 				//var fov = Number($("#fov").val());
 				var fov = 180 / Math.pow(2,panorama.getZoom()); 
-				$("#fov").val(fov);
+				$("#fov").val(fov.toFixed(2));
 				var angRatio = fov / result.imgWidth;
 				var ang = xmid * angRatio - (fov / 2);
 				var gCoord= panorama.getPosition();
