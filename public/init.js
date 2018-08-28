@@ -803,6 +803,10 @@ function doFollowRoute() {
 								console.log("Intersection point is too close - ignoring.");
 							}
 							else {
+								// Remove intersection vector from array.
+								var index = intersectVectors.features.indexOf(line2);
+								if (index > -1)
+									intersectVectors.features.splice(index, 1);
 								// Add as a feature to the map.
 								var geojsonFormat = new ol.format.GeoJSON();
 									
