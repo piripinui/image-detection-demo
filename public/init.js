@@ -367,7 +367,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var xmid = xmin + (xmax - xmin) / 2;
 	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
 	var fov = 180 / Math.pow(2, zoom);
-	$("#fov").val(fov);
+	$("#fov").val(fov.toFixed(2));
 	var angRatio = fov / imgWidth;
 	var ang = xmid * angRatio - (fov / 2);
 	var heading = panorama.getPov().heading;
