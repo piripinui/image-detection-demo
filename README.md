@@ -35,7 +35,14 @@ https://github.com/bourdakos1/Custom-Object-Detection
 Some modifications to this example have been done to specifically detect poles, transformers and streetlights. These can be found in the `Custom-Object-Detection` directory. These should be overlaid over a clone of the repo above.
 The main file is in a subdirectory called `object_detection` and is called `google_pole_object_detection_runner.py`. This is the script that should be run and when running it creates a web service that will process image files in a directory called specified by the second command line parameter (see example below). It will create new images labelled with detected equipment in a subdirectory called `/processed` below the nominated directory.
 
-For example, to run the script execute a command line like this
+### Training
+The service needs to be trained with a set of images containing the elements to be detected (currently poles, streetlights, transformers, rusty transformers and bad transformers). The definition of the number of detection classes is held in the configuration file `faster_rcnn_resnet101_poles.config`, specifically in the `num_classes` property. The definition of the classes themselves is held in `pole_annotations/label.pbtxt` (as specified in `faster_rcnn_resnet101_poles.config`) and you'll see the code words used to describe the objects types listed above in that file.
+
+As described in the [original example](https://github.com/bourdakos1/Custom-Object-Detection) you need to download a Base Model to train from and this can be obtained from the [Model Zoo](https://github.com/bourdakos1/Custom-Object-Detection/blob/master/object_detection/g3doc/detection_model_zoo.md). As the configuration file name suggests, I used the `faster_rcnn_resnet101_coco` model. These models consist of a number of files zipped up and the model checkpoint files should be placed in `Custom-Object-Detection` alongside the configuration file (`faster_rcnn_resnet101_poles.config`) which refers to that checkpoint name.
+
+The image set used for training should be in a directory called `pole_images`, again as specified in `faster_rcnn_resnet101_poles.config`. The images should be JPEG files that have associated [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) metadata defining where the objects to be detected are in that image. That metadata is stored in an XML file with the same name as the JPEG file it refers to stored in `pole_annotations/xmls`. These files need to be converted into Tensorflow Records that can be used by the training routines and this is done by running `object_detection/create_tf_pole_record.py` (which also defines where the XML files should be). The result of this is two files called `train.record` and `val.record` in the `Custom-Object-Detection` directory.
+
+Once you have done this you can start the actual training. To do this, run the script execute a command line like this
 
 `python object_detection/google_pole_object_detection_runner.py 3200 /foo/bar/images`
 
