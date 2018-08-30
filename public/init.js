@@ -776,7 +776,9 @@ function doFollowRoute() {
 		};
 		
 		tasks.reduce(function(cur, next) {
-			return cur.then(next);
+			var result = cur.then(next);
+			var fail = cur.fail(next);
+			return result ? result : fail;
 		}, $.Deferred().resolve()).then(function() {
 			// Loop over intersect vectors to find points.
 			
