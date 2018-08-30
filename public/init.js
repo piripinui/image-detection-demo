@@ -370,7 +370,6 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
 	var fov = 180 / Math.pow(2, zoom);
 	$("#fov").text(fov.toFixed(2) + "°");
-	//$("#fov").val(fov.toFixed(2));
 	var angRatio = fov / imgWidth;
 	var ang = xmid * angRatio - (fov / 2);
 	var heading = panorama.getPov().heading;
@@ -466,9 +465,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmin = Math.round(result.classes[i].xmin * result.imgWidth);
 				var xmax = Math.round(result.classes[i].xmax * result.imgWidth);
 				var xmid = xmin + (xmax - xmin) / 2;
-				//var fov = Number($("#fov").val());
 				var fov = 180 / Math.pow(2,panorama.getZoom()); 
-				//$("#fov").val(fov.toFixed(2));
 				$("#fov").text(fov.toFixed(2) + "°");
 				var angRatio = fov / result.imgWidth;
 				var ang = xmid * angRatio - (fov / 2);
