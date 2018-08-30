@@ -78,11 +78,13 @@ Do an `npm install`
 
 ### Tensorflow Server
 
-For the image recognition services, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths:
+Download the original example from https://github.com/bourdakos1/Custom-Object-Detection before installing this repo. Create am empty directory to put this repo in but put the contents of the original example in that directory (in `Custom-Object-Detection`) before putting the contents of this repo in the same parent directory. In this way you'll have the base example which will be overlaid with my modifications on top.
+
+For the image recognition services and Tensorflow generally, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths.
 
 Update the PATH variable as required by Python.
 
-Create a PYTHONPATH variable while in `google_maptiles_demo/Custom-Object-Detection` directory as follows:
+Create a PYTHONPATH variable while in `image-detection-demo/Custom-Object-Detection` directory as follows:
 
 ``export PYTHONPATH=`pwd`:`pwd`/slim``
 
