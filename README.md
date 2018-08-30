@@ -42,7 +42,21 @@ As described in the [original example](https://github.com/bourdakos1/Custom-Obje
 
 The image set used for training should be in a directory called `pole_images`, again as specified in `faster_rcnn_resnet101_poles.config`. The images should be JPEG files that have associated [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) metadata defining where the objects to be detected are in that image. That metadata is stored in an XML file with the same name as the JPEG file it refers to stored in `pole_annotations/xmls`. These files need to be converted into Tensorflow Records that can be used by the training routines and this is done by running `object_detection/create_tf_pole_record.py` (which also defines where the XML files should be). The result of this is two files called `train.record` and `val.record` in the `Custom-Object-Detection` directory.
 
-Once you have done this you can start the actual training. To do this, run the script execute a command line like this
+Once you have done this you can start the actual training. To do this, run the script execute a command line like this:
+
+`python object_detection/train.py --logtostderr --train_dir=train --pipeline_config_path=faster_rcnn_resnet101_poles.config`
+
+Training will take a long time (~2 days to complete the 200k iteration default) and should be performed on a machine that has a GPU.
+
+Training will create checkpoint files in the `train` directory. At any point in training you can stop it and export an inference graph from the latest checkpoint. The interference graph is created in `pole_output_interference_graph` using the command something like:
+
+`python object_detection/export_inference_graph.py --input_type image_tensor --pipeline_config_path faster_rcnn_resnet101_poles.config --trained_checkpoint_prefix model.ckpt-xxxxxx --output_directory pole_output_inference_graph`
+
+...where xxxxxx is the checkpoint number of the checkpoint you are using to create the inference graph.
+
+Note that the `model.ckpt-xxxxxxx` files are expected to be in the `Custom-Object-Detection` directory i.e. you would need to copy those files from `train` to that location.
+
+Once the inference graph exists, you can actually detect objects in image files issuing a command something like this:
 
 `python object_detection/google_pole_object_detection_runner.py 3200 /foo/bar/images`
 
