@@ -364,12 +364,13 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var xmin = Math.round(detectionClass.xmin * imgWidth);
 	var xmax = Math.round(detectionClass.xmax * imgWidth);
-	// Use the min corner as position rather than the midpoint between the width of the pole.
+	// Use the min corner as position rather than the midpoint between the width of the pole? Ok for "L" poles but not "T" poles. Should classify and train for these types separately.
 	//var xmid = xmin + (xmax - xmin) / 2;
 	var xmid = xmin;
 	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
 	var fov = 180 / Math.pow(2, zoom);
-	$("#fov").val(fov.toFixed(2));
+	$("#fov").text(fov.toFixed(2) + "°");
+	//$("#fov").val(fov.toFixed(2));
 	var angRatio = fov / imgWidth;
 	var ang = xmid * angRatio - (fov / 2);
 	var heading = panorama.getPov().heading;
@@ -467,7 +468,8 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmid = xmin + (xmax - xmin) / 2;
 				//var fov = Number($("#fov").val());
 				var fov = 180 / Math.pow(2,panorama.getZoom()); 
-				$("#fov").val(fov.toFixed(2));
+				//$("#fov").val(fov.toFixed(2));
+				$("#fov").text(fov.toFixed(2) + "°");
 				var angRatio = fov / result.imgWidth;
 				var ang = xmid * angRatio - (fov / 2);
 				var gCoord= panorama.getPosition();
