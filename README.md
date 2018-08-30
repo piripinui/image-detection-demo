@@ -56,6 +56,7 @@ Training will create checkpoint files in the `train` directory. At any point in 
 
 Note that the `model.ckpt-xxxxxxx` files are expected to be in the `Custom-Object-Detection` directory i.e. you would need to copy those files from `train` to that location.
 
+### Running the Image Detection Service
 Once the inference graph exists, you can actually detect objects in image files issuing a command something like this:
 
 `python object_detection/google_pole_object_detection_runner.py 3200 /foo/bar/images`
