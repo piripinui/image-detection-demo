@@ -1,7 +1,7 @@
 var sessionToken,
 map,view, markerFeature, markerSource, poleSource, heading,
 routeSource, routeStyle, currentRoute, followBearing,
-intersectVectors,
+poleIntersectVectors, rustytxIntersectVectors,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord, startFeature, endFeature,
@@ -379,7 +379,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 30 / 1000; // 30 metres.
+	var vectorDist = 35 / 1000; // 30 metres.
 
 	if (direction > 180)
 		direction = -(360 - direction);
@@ -388,8 +388,6 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var locVector = turf.lineString([startPoint.geometry.coordinates, endPoint.geometry.coordinates]);
 	
 	locVector.properties.routeheading = heading;
-	
-	intersectVectors.features.push(locVector);
 
 	return locVector;	
 }
@@ -499,6 +497,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						addFeaturesForDownload(poleFeature, gCoord, type);	
 
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
+						poleIntersectVectors.features.push(locVector);
 						
 						// Show the vector on the map.
 						var geojsonFormat = new ol.format.GeoJSON();
@@ -560,6 +559,9 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						txSource.addFeature(txFeature);
 						addFeaturesForDownload(txFeature, gCoord, type);
 						
+						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
+						txIntersectVectors.features.push(locVector);
+						
 						break;
 					case 'rusty_tx':
 						txFeature = new ol.Feature({
@@ -580,6 +582,9 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						txSource.addFeature(txFeature);
 						
 						addFeaturesForDownload(txFeature, gCoord, type);
+						
+						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
+						rustytxIntersectVectors.features.push(locVector);
 						
 						break;
 					case 'bad_tx':
@@ -726,7 +731,7 @@ function doCapture() {
 	})
 }
 
-function createPointsFromIntersections(intersectVectors) {
+function createPointsFromIntersections(intersectVectors, mapSource, desc, icon) {
 	// Loop over intersect vectors to find points.			
 	for (i = 0; i < intersectVectors.features.length - 1; i++) {
 		var line1 = intersectVectors.features[i];
@@ -767,20 +772,20 @@ function createPointsFromIntersections(intersectVectors) {
 						
 						var vecStyle = new ol.style.Style({
 							image: new ol.style.Icon({
-									src: 'calculated_route_icon.png',
+									src: icon,
 									scale: 0.02
 							})
 						});
 						vecFeature.setStyle(vecStyle);
 						
-						poleSource.addFeature(vecFeature);
+						mapSource.addFeature(vecFeature);
 						
 						map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
 						
 						var marker = new google.maps.Marker({
 							position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
 							map: panorama,
-							title: "Pole Intersection"
+							title: desc
 						});
 					}
 				}
@@ -821,7 +826,17 @@ function doFollowRoute() {
 			});
 		};
 		
-		intersectVectors = {
+		poleIntersectVectors = {
+			type: "FeatureCollection",
+			features: []
+		};
+		
+		rustytxIntersectVectors = {
+			type: "FeatureCollection",
+			features: []
+		};
+		
+		txIntersectVectors = {
 			type: "FeatureCollection",
 			features: []
 		};
@@ -844,7 +859,9 @@ function doFollowRoute() {
 			var fail = cur.fail(next);
 			return result ? result : fail;
 		}, $.Deferred().resolve()).then(function() {
-			createPointsFromIntersections(intersectVectors);
+			createPointsFromIntersections(poleIntersectVectors, poleSource, "Potential Pole Location", 'calculated_route_icon.png');
+			createPointsFromIntersections(rustytxIntersectVectors, poleSource, "Potential Rusty Transformer", 'round_blue.png');
+			createPointsFromIntersections(txIntersectVectors, poleSource, "Potential Transformer Location", 'round_orange.png');
 		});
 	}
 	else {
