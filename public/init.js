@@ -1,5 +1,5 @@
 var sessionToken,
-map,view, markerFeature, markerSource, poleSource, heading,
+map,view, markerFeature, markerSource, poleSource, intersectSource, heading,
 routeSource, routeStyle, currentRoute, followBearing,
 poleIntersectVectors, rustytxIntersectVectors,
 setDestinationMode =false,
@@ -379,7 +379,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 35 / 1000; // 30 metres.
+	var vectorDist = 20 / 1000; // 30 metres.
 
 	if (direction > 180)
 		direction = -(360 - direction);
@@ -808,6 +808,8 @@ function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, 
 	console.log("Intersection points created.");
 }
 
+var detectionAngles = [0, 45, -45];
+
 function doFollowRoute() {
 	if (typeof currentRoute != "undefined") {
 		console.log("Following route...");
@@ -861,14 +863,14 @@ function doFollowRoute() {
 			var bearing = turf.bearing(firstPoint, lastPoint);
 			
 			if (i == 0) {
-				createTask(firstPoint, bearing);
-				//createTask(firstPoint, bearing + 45);
-				//createTask(firstPoint, bearing - 45);
+				detectionAngles.forEach(ang => {
+					createTask(firstPoint, bearing + ang);
+				});
 			}
 			
-			createTask(lastPoint, bearing);
-			//createTask(lastPoint, bearing + 45);
-			//createTask(lastPoint, bearing - 45);
+			detectionAngles.forEach(ang => {
+					createTask(lastPoint, bearing + ang);
+			});
 		};
 		
 		tasks.reduce(function(cur, next) {
@@ -1062,9 +1064,17 @@ function setupMap() {
 			})
 		});
 		
+		intersectSource = new ol.source.Vector({wrapX: false});
+		
 		var routes = new ol.layer.Vector({
 			source:	routeSource,
 			style: 	routeStyle
+		});
+		
+		var hmLayer = new ol.layer.Heatmap({
+			source: intersectSource,
+			blur: 50,
+			radius: 50
 		});
 
 		view = new ol.View({
@@ -1081,7 +1091,8 @@ function setupMap() {
 					txs,
 					rustyTxs,
 					streetlights,
-					vector
+					vector,
+					hmLayer
 				],
 				controls : ol.control.defaults({
 					attribution : false
