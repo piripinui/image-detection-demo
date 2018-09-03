@@ -731,7 +731,7 @@ function doCapture() {
 	})
 }
 
-function createPointsFromIntersections(intersectVectors, mapSource, desc, icon) {
+function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, markerIcon) {
 	// Loop over intersect vectors to find points.			
 	for (i = 0; i < intersectVectors.features.length - 1; i++) {
 		var line1 = intersectVectors.features[i];
@@ -781,12 +781,25 @@ function createPointsFromIntersections(intersectVectors, mapSource, desc, icon) 
 						mapSource.addFeature(vecFeature);
 						
 						map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
+						var marker;
 						
-						var marker = new google.maps.Marker({
-							position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
-							map: panorama,
-							title: desc
-						});
+						if (markerIcon) {
+							marker = new google.maps.Marker({
+								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
+								map: panorama,
+								label: desc,
+								title: desc,
+								icon: markerIcon
+							});
+						}
+						else {
+							marker = new google.maps.Marker({
+								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
+								map: panorama,
+								label: desc,
+								title: desc
+							});
+						}
 					}
 				}
 			}
@@ -861,7 +874,7 @@ function doFollowRoute() {
 		}, $.Deferred().resolve()).then(function() {
 			createPointsFromIntersections(poleIntersectVectors, poleSource, "Potential Pole Location", 'calculated_route_icon.png');
 			createPointsFromIntersections(rustytxIntersectVectors, poleSource, "Potential Rusty Transformer", 'round_blue.png');
-			createPointsFromIntersections(txIntersectVectors, poleSource, "Potential Transformer Location", 'round_orange.png');
+			createPointsFromIntersections(txIntersectVectors, poleSource, "Potential Transformer Location", 'round_orange.png', 'google_push_pin_orange.png');
 		});
 	}
 	else {
