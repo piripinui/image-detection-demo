@@ -862,9 +862,13 @@ function doFollowRoute() {
 			
 			if (i == 0) {
 				createTask(firstPoint, bearing);
+				//createTask(firstPoint, bearing + 45);
+				//createTask(firstPoint, bearing - 45);
 			}
 			
 			createTask(lastPoint, bearing);
+			//createTask(lastPoint, bearing + 45);
+			//createTask(lastPoint, bearing - 45);
 		};
 		
 		tasks.reduce(function(cur, next) {
@@ -1064,8 +1068,8 @@ function setupMap() {
 		});
 
 		view = new ol.View({
-					center : [0, 0],
-					zoom : 2
+					center : ol.proj.transform([-76.180480, 42.601210], 'EPSG:4326', 'EPSG:3857'),
+					zoom : 15
 				});
 		map = new ol.Map({
 				layers : [
