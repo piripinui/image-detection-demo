@@ -726,6 +726,70 @@ function doCapture() {
 	})
 }
 
+function createPointsFromIntersections(intersectVectors) {
+	// Loop over intersect vectors to find points.			
+	for (i = 0; i < intersectVectors.features.length - 1; i++) {
+		var line1 = intersectVectors.features[i];
+		for (j = i + 1; j < intersectVectors.features.length; j++) {
+			var line2 = intersectVectors.features[j];
+			
+			if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
+				// Only check if the intersection line is not co-incident.
+				var intersects = turf.lineIntersect(line1, line2);
+
+				if (intersects.features.length > 0) {
+					var intersectPoint = intersects.features[0];
+					var start = turf.point(line1.geometry.coordinates[0]);
+					var end = turf.point(intersectPoint.geometry.coordinates);
+					var distance = turf.distance(start, end, { units: 'kilometers'});
+					var rb = turf.rhumbBearing(start, end);
+					var ang = 90 - (rb + 90 - line1.properties.routeheading);
+					var x = Math.abs(Math.cos(ang) * distance);
+					var y = Math.abs(Math.sin(ang) * distance);
+					var comp = Math.min(x, y);
+
+					if (comp < 7 / 1000) {
+						console.log("Intersection point is too close - ignoring.");
+					}
+					else {
+						// Remove intersection vector from array so that it won't be processed later.
+						var index = intersectVectors.features.indexOf(line2);
+						if (index > -1)
+							intersectVectors.features.splice(index, 1);
+						// Add as a feature to the map.
+						var geojsonFormat = new ol.format.GeoJSON();
+							
+						var vecFeature = geojsonFormat.readFeature(intersectPoint,
+						{
+							dataProjection: 'EPSG:4326',
+							featureProjection: 'EPSG:3857'
+						});
+						
+						var vecStyle = new ol.style.Style({
+							image: new ol.style.Icon({
+									src: 'calculated_route_icon.png',
+									scale: 0.02
+							})
+						});
+						vecFeature.setStyle(vecStyle);
+						
+						poleSource.addFeature(vecFeature);
+						
+						map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
+						
+						var marker = new google.maps.Marker({
+							position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
+							map: panorama,
+							title: "Pole Intersection"
+						});
+					}
+				}
+			}
+		}
+	}
+	console.log("Intersection points created.");
+}
+
 function doFollowRoute() {
 	if (typeof currentRoute != "undefined") {
 		console.log("Following route...");
@@ -780,68 +844,7 @@ function doFollowRoute() {
 			var fail = cur.fail(next);
 			return result ? result : fail;
 		}, $.Deferred().resolve()).then(function() {
-			// Loop over intersect vectors to find points.
-			
-			for (i = 0; i < intersectVectors.features.length - 1; i++) {
-				var line1 = intersectVectors.features[i];
-				for (j = i + 1; j < intersectVectors.features.length; j++) {
-					var line2 = intersectVectors.features[j];
-					
-					if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
-						// Only check if the intersection line is not co-incident.
-						var intersects = turf.lineIntersect(line1, line2);
-
-						if (intersects.features.length > 0) {
-							var intersectPoint = intersects.features[0];
-							var start = turf.point(line1.geometry.coordinates[0]);
-							var end = turf.point(intersectPoint.geometry.coordinates);
-							var distance = turf.distance(start, end, { units: 'kilometers'});
-							var rb = turf.rhumbBearing(start, end);
-							var ang = 90 - (rb + 90 - line1.properties.routeheading);
-							var x = Math.abs(Math.cos(ang) * distance);
-							var y = Math.abs(Math.sin(ang) * distance);
-							var comp = Math.min(x, y);
-
-							if (comp < 7 / 1000) {
-								console.log("Intersection point is too close - ignoring.");
-							}
-							else {
-								// Remove intersection vector from array so that it won't be processed later.
-								var index = intersectVectors.features.indexOf(line2);
-								if (index > -1)
-									intersectVectors.features.splice(index, 1);
-								// Add as a feature to the map.
-								var geojsonFormat = new ol.format.GeoJSON();
-									
-								var vecFeature = geojsonFormat.readFeature(intersectPoint,
-								{
-									dataProjection: 'EPSG:4326',
-									featureProjection: 'EPSG:3857'
-								});
-								
-								var vecStyle = new ol.style.Style({
-									image: new ol.style.Icon({
-											src: 'calculated_route_icon.png',
-											scale: 0.02
-									})
-								});
-								vecFeature.setStyle(vecStyle);
-								
-								poleSource.addFeature(vecFeature);
-								
-								map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
-								
-								var marker = new google.maps.Marker({
-									position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
-									map: panorama,
-									title: "Pole Intersection"
-								});
-							}
-						}
-					}
-				}
-			}
-			console.log("Following complete");
+			createPointsFromIntersections(intersectVectors);
 		});
 	}
 	else {
