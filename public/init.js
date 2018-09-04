@@ -386,7 +386,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 33 / 1000; // Distance from current position to create a vector from.
+	var vectorDist = 35 / 1000; // Distance from current position to create a vector from.
 
 	if (direction > 180)
 		direction = -(360 - direction);
