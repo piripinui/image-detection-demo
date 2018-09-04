@@ -379,7 +379,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 20 / 1000; // 30 metres.
+	var vectorDist = 20 / 1000; // Distance from current position to create a vector from.
 
 	if (direction > 180)
 		direction = -(360 - direction);
@@ -388,6 +388,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var locVector = turf.lineString([startPoint.geometry.coordinates, endPoint.geometry.coordinates]);
 	
 	locVector.properties.routeheading = heading;
+	locVector.properties.detectionType = detectionType;
 
 	return locVector;	
 }
@@ -463,7 +464,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmin = Math.round(result.classes[i].xmin * result.imgWidth);
 				var xmax = Math.round(result.classes[i].xmax * result.imgWidth);
 				var xmid = xmin + (xmax - xmin) / 2;
-				var fov = 180 / Math.pow(2,panorama.getZoom()); 
+				var fov = 180 / Math.pow(2, panorama.getZoom()); 
 				$("#fov").text(fov.toFixed(2) + "°");
 				var angRatio = fov / result.imgWidth;
 				var ang = xmid * angRatio - (fov / 2);
@@ -497,7 +498,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						addFeaturesForDownload(poleFeature, gCoord, type);	
 
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
-						poleIntersectVectors.features.push(locVector);
+						poleIntersectVectors[poleIntersectVectors.length - 1].features.push(locVector);
 						
 						// Show the vector on the map.
 						var geojsonFormat = new ol.format.GeoJSON();
@@ -560,7 +561,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
-						txIntersectVectors.features.push(locVector);
+						txIntersectVectors[txIntersectVectors.length - 1].features.push(locVector);
 						
 						break;
 					case 'rusty_tx':
@@ -584,7 +585,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
-						rustytxIntersectVectors.features.push(locVector);
+						rustytxIntersectVectors[rustytxIntersectVectors.length - 1].features.push(locVector);
 						
 						break;
 					case 'bad_tx':
@@ -732,35 +733,23 @@ function doCapture() {
 }
 
 function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, markerIcon) {
-	// Loop over intersect vectors to find points.			
-	for (i = 0; i < intersectVectors.features.length - 1; i++) {
-		var line1 = intersectVectors.features[i];
-		for (j = i + 1; j < intersectVectors.features.length; j++) {
-			var line2 = intersectVectors.features[j];
-			
-			if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
-				// Only check if the intersection line is not co-incident.
-				var intersects = turf.lineIntersect(line1, line2);
+	// Loop over intersect vectors to find points.		
+	for (locIndex = 0; locIndex < intersectVectors.length - 1; locIndex++) {
+		var currentIntersects = intersectVectors[locIndex];
+		var nextIntersects = intersectVectors[locIndex + 1];
+		
+		for (i = 0; i < currentIntersects.features.length; i++) {
+			var line1 = currentIntersects.features[i];
+			for (j = 0; j < nextIntersects.features.length; j++) {
+				var line2 = nextIntersects.features[j];
+				
+				if (line1.geometry.coordinates[0][0] != line2.geometry.coordinates[0][0] && line1.geometry.coordinates[0][1] != line2.geometry.coordinates[0][1]) {
+					// Only check if the intersection line is not co-incident.
+					var intersects = turf.lineIntersect(line1, line2);
 
-				if (intersects.features.length > 0) {
-					var intersectPoint = intersects.features[0];
-					var start = turf.point(line1.geometry.coordinates[0]);
-					var end = turf.point(intersectPoint.geometry.coordinates);
-					var distance = turf.distance(start, end, { units: 'kilometers'});
-					var rb = turf.rhumbBearing(start, end);
-					var ang = 90 - (rb + 90 - line1.properties.routeheading);
-					var x = Math.abs(Math.cos(ang) * distance);
-					var y = Math.abs(Math.sin(ang) * distance);
-					var comp = Math.min(x, y);
-
-					if (comp < 7 / 1000) {
-						console.log("Intersection point is too close - ignoring.");
-					}
-					else {
-						// Remove intersection vector from array so that it won't be processed later.
-						var index = intersectVectors.features.indexOf(line2);
-						if (index > -1)
-							intersectVectors.features.splice(index, 1);
+					if (intersects.features.length > 0) {
+						var intersectPoint = intersects.features[0];
+						
 						// Add as a feature to the map.
 						var geojsonFormat = new ol.format.GeoJSON();
 							
@@ -805,10 +794,18 @@ function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, 
 			}
 		}
 	}
+
 	console.log("Intersection points created.");
 }
 
-var detectionAngles = [0, 45, -45];
+function setupIntersectVectors() {	
+	poleIntersectVectors = [];
+	rustytxIntersectVectors = [];
+	txIntersectVectors = [];
+}
+
+// If you add more angles here, when following a route the code will adjust the streeview bearing according to the angle list.
+var detectionAngles = [0];
 
 function doFollowRoute() {
 	if (typeof currentRoute != "undefined") {
@@ -835,26 +832,25 @@ function doFollowRoute() {
 				var svPromise = showStreetview(coord);
 				
 				svPromise.then(function() {
+					poleIntersectVectors.push({
+						type: "FeatureCollection",
+						features: []
+					});
+					rustytxIntersectVectors.push({
+						type: "FeatureCollection",
+						features: []
+					});
+					txIntersectVectors.push({
+						type: "FeatureCollection",
+						features: []
+					});
 					doAnalyse(null, coord, bearing, dfd);
 				});
 				return dfd;
 			});
 		};
 		
-		poleIntersectVectors = {
-			type: "FeatureCollection",
-			features: []
-		};
-		
-		rustytxIntersectVectors = {
-			type: "FeatureCollection",
-			features: []
-		};
-		
-		txIntersectVectors = {
-			type: "FeatureCollection",
-			features: []
-		};
+		setupIntersectVectors();
 		
 		for (i = 0; i < chunks.features.length; i++) {
 			var aFeature = chunks.features[i];
@@ -869,7 +865,7 @@ function doFollowRoute() {
 			}
 			
 			detectionAngles.forEach(ang => {
-					createTask(lastPoint, bearing + ang);
+				createTask(lastPoint, bearing + ang);
 			});
 		};
 		
@@ -888,12 +884,29 @@ function doFollowRoute() {
 	};
 }
 
+function doAnalyseOneShot() {
+	setupIntersectVectors();
+	poleIntersectVectors.push({
+		type: "FeatureCollection",
+		features: []
+	});
+	rustytxIntersectVectors.push({
+		type: "FeatureCollection",
+		features: []
+	});
+	txIntersectVectors.push({
+		type: "FeatureCollection",
+		features: []
+	});
+	doAnalyse();
+}
+
 function init() {	
 	var el = document.getElementById("analyse");
 	if (el.addEventListener)
-		el.addEventListener("click", doAnalyse, false);
+		el.addEventListener("click", doAnalyseOneShot, false);
 	else if (el.attachEvent)
-		el.attachEvent('onclick', doAnalyse);
+		el.attachEvent('onclick', doAnalyseOneShot);
 	
 	/* var el = document.getElementById("sweep");
 	if (el.addEventListener)
