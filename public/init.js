@@ -364,11 +364,18 @@ function addFeaturesForDownload(aFeature, gCoord, type) {
 function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var xmin = Math.round(detectionClass.xmin * imgWidth);
 	var xmax = Math.round(detectionClass.xmax * imgWidth);
-	// Use the min corner as position rather than the midpoint between the width of the pole? Ok for "L" poles but not "T" poles. Should classify and train for these types separately.
-	//var xmid = xmin + (xmax - xmin) / 2;
-	var xmid = xmin;
+
+	var xmid;
+	
+	if (detectionClass.xmin > 0.5 && detectionClass.xmax > 0.5)
+		xmid = xmax;
+	else if (detectionClass.xmin < 0.5 && detectionClass.xmax < 0.5)
+			xmid = xmin;
+		else
+			xmid = xmin + (xmax - xmin) / 2;
+	
 	var zoom = typeof panorama.getZoom() !== 'undefined' ? panorama.getZoom() : 1;
-	var fov = 180 / Math.pow(2, zoom);
+	var fov = calculateFOV();
 	$("#fov").text(fov.toFixed(2) + "°");
 	var angRatio = fov / imgWidth;
 	var ang = xmid * angRatio - (fov / 2);
@@ -379,7 +386,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 20 / 1000; // Distance from current position to create a vector from.
+	var vectorDist = 33 / 1000; // Distance from current position to create a vector from.
 
 	if (direction > 180)
 		direction = -(360 - direction);
@@ -391,6 +398,11 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	locVector.properties.detectionType = detectionType;
 
 	return locVector;	
+}
+
+function calculateFOV() {
+	var fov = 180 / Math.pow(2, panorama.getZoom()); 
+	return fov;
 }
 
 async function doAnalyse(evt, position, bearing, dfd) {
@@ -464,7 +476,7 @@ async function doAnalyse(evt, position, bearing, dfd) {
 				var xmin = Math.round(result.classes[i].xmin * result.imgWidth);
 				var xmax = Math.round(result.classes[i].xmax * result.imgWidth);
 				var xmid = xmin + (xmax - xmin) / 2;
-				var fov = 180 / Math.pow(2, panorama.getZoom()); 
+				var fov = calculateFOV();
 				$("#fov").text(fov.toFixed(2) + "°");
 				var angRatio = fov / result.imgWidth;
 				var ang = xmid * angRatio - (fov / 2);
