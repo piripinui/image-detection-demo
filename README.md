@@ -67,6 +67,10 @@ Once the inference graph exists, you can actually detect objects in image files 
 
 The first parameter defines the port number the service will run on. The last parameter defines the directory from which the Tensorflow script should read images from. This directory should match the directory the server writes to (see above).
 
+### Log Files
+
+Both of the server create log files. The nodejs server creates its log files in the directory called `logs`. The Tensorflow server create its log files in the directory called `Custom-Object-Detection/logs`.
+
 ### Services
 The Tensorflow-based server creates a single endpoint used in the demo:
 
@@ -82,7 +86,7 @@ Do an `npm install`
 
 ### Tensorflow Server
 
-Download the original example from https://github.com/bourdakos1/Custom-Object-Detection before installing this repo. Create an empty directory to put this repo in but put the contents of the original example in that directory (in `Custom-Object-Detection`) before putting the contents of this repo in the same parent directory. In this way you'll have the base example which will be overlaid with my modifications on top.
+Download the original example from https://github.com/bourdakos1/Custom-Object-Detection before installing this repo. Create am empty directory to put this repo in but put the contents of the original example in that directory (in `Custom-Object-Detection`) before putting the contents of this repo in the same parent directory. In this way you'll have the base example which will be overlaid with my modifications on top.
 
 For the image recognition services and Tensorflow generally, [Python](https://www.python.org/) 3.6.5 must be installed. Once installed, the environment needs to be adjusted to point at the relevant paths.
 
@@ -102,5 +106,6 @@ Keys to access the [Google Maps](https://developers.google.com/maps/documentatio
 |`public/maps_api_key.txt`       |Holds the API key for the Google Maps API       |
 |`public/directions_api_key.txt` |Holds the API key for the Google Directions API |
 |`public/tile_api_key.txt`       |Holds the API for the Google Tile API           |
+
 
 
