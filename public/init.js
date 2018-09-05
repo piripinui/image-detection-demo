@@ -965,9 +965,9 @@ function doFollowRoute() {
 			poleSource.clear();
 			clearMarkers();
 			
-			createPointsFromIntersections(poleIntersectVectors, poleIntersections, poleSource, "Potential Pole Location", 'calculated_route_icon.png');
-			createPointsFromIntersections(rustytxIntersectVectors, rustytxIntersections, poleSource, "Potential Rusty Transformer", 'round_blue.png');
-			createPointsFromIntersections(txIntersectVectors, txIntersections, poleSource, "Potential Transformer Location", 'round_orange.png', 'google_push_pin_orange.png');
+			createPointsFromIntersections(poleIntersectVectors, poleIntersections, poleSource, "Pole", 'calculated_route_icon.png');
+			createPointsFromIntersections(rustytxIntersectVectors, rustytxIntersections, poleSource, "Rusty Transformer", 'round_blue.png');
+			createPointsFromIntersections(txIntersectVectors, txIntersections, poleSource, "Transformer", 'round_orange.png', 'google_push_pin_orange.png');
 		});
 	}
 	else {
