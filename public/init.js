@@ -878,6 +878,10 @@ function clearMarkers() {
 	svMarkers = [];
 }
 
+function clearDownload() {
+	downloadFeatures.features = [];
+}
+
 // If you add more angles here, when following a route the code will adjust the streeview bearing according to the angle list.
 var detectionAngles = [0];
 
@@ -951,6 +955,7 @@ function doFollowRoute() {
 				
 			poleSource.clear();
 			clearMarkers();
+			clearDownload();
 			
 			createPointsFromIntersections(poleIntersectVectors, poleIntersections, poleSource, "Pole", 'calculated_route_icon.png');
 			createPointsFromIntersections(rustytxIntersectVectors, rustytxIntersections, poleSource, "Rusty Transformer", 'round_blue.png');
