@@ -40,11 +40,15 @@ The service needs to be trained with a set of images containing the elements to 
 
 As described in the [original example](https://github.com/bourdakos1/Custom-Object-Detection) you need to download a Base Model to train from and this can be obtained from the [Model Zoo](https://github.com/bourdakos1/Custom-Object-Detection/blob/master/object_detection/g3doc/detection_model_zoo.md). As the configuration file name above suggests, I used the `faster_rcnn_resnet101_coco` model. These models consist of a number of files zipped up and the model checkpoint files should be placed in `Custom-Object-Detection` alongside the configuration file (`faster_rcnn_resnet101_poles.config`) which refers to that checkpoint name.
 
-The image set used for training should be in a directory called `pole_images`, as specified in the annotation metadata that relate to each file stored in `pole_annotations/xml`. The images should be JPEG files that have associated [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) metadata defining where the objects to be detected are in that image. That metadata is stored in an XML file with the same name as the JPEG file it refers to stored in `pole_annotations/xmls`. These XML files are used to create Tensorflow Records that are the format actually used by the training routines and this is done by running `object_detection/create_tf_pole_record.py` (which also defines the directory where the XML files are expected to be). The result of this is two files called `train.record` and `val.record` in the `Custom-Object-Detection` directory.
+The image set used for training should be in a directory called `pole_images`. The images should be JPEG files that have associated [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) metadata defining where the objects to be detected are in that image. That metadata is stored in an XML file with the same name as the JPEG file it refers to stored in `pole_annotations/xmls`. These XML files define the areas within the JPEG file they refer to that represent instances of the objects to be detected i.e. pole, transformers etc. and so are critical for training. The location of the JPEG file they refer to is embedded in the XML document as well.
+
+The Pascal VOC metadata in these XML files are used to create Tensorflow Records, which is the format actually used by the training routines. This conversion is done by running `object_detection/create_tf_pole_record.py` (which also has the directory where the XML files are expected to be i.e. `pole_annotations/xml` hardwired into it). The result of running this is two files called `train.record` and `val.record` stored in the `Custom-Object-Detection` directory.
 
 Once you have done this you can start the actual training. To do this, run the script execute a command line like this:
 
 `python object_detection/train.py --logtostderr --train_dir=train --pipeline_config_path=faster_rcnn_resnet101_poles.config`
+
+This code will use `train.record` and `val.record` to train against the image set in `pole_images`, minimising the loss. Its progress can be visualised using [TensorBoard](https://www.tensorflow.org/guide/summaries_and_tensorboard) against the content of the `train` directory if desired.
 
 Training will take a long time (~2 days to complete the 200k iteration default) and should be performed on a machine that has a GPU.
 
