@@ -386,7 +386,7 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 	var options = {
 		units: 'kilometers'
 	};
-	var vectorDist = 35 / 1000; // Distance from current position to create a vector from.
+	var vectorDist = 35 / 1000; // Distance from current position to create a vector from in kilometres.
 
 	if (direction > 180)
 		direction = -(360 - direction);
@@ -745,7 +745,12 @@ function doCapture() {
 }
 
 function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, markerIcon) {
-	// Loop over intersect vectors to find points.		
+	// Loop over intersect vectors to find points.	Each element of intersectVectors array contains a FeatureCollection of
+	// lines representing vectors pointing at detected objects in the image taken at that location. We then look for intersections
+	// between the vectors at one location with those at the next location - an intersection point is probably the actual location
+	// of the detected object in the real world. We then create a Feature and place it in the map at that location. We also create
+	// a marker to be displayed in Streetview at the same location.
+	
 	for (locIndex = 0; locIndex < intersectVectors.length - 1; locIndex++) {
 		var currentIntersects = intersectVectors[locIndex];
 		var nextIntersects = intersectVectors[locIndex + 1];
