@@ -968,6 +968,7 @@ function doFollowRoute() {
 }
 
 function doAnalyseOneShot() {
+	// Create a new set of intersect vector to store this one result in.
 	setupIntersectVectors();
 	poleIntersectVectors.push({
 		type: "FeatureCollection",
@@ -981,6 +982,7 @@ function doAnalyseOneShot() {
 		type: "FeatureCollection",
 		features: []
 	});
+	// Analyse just the current Streetview.
 	doAnalyse();
 }
 
