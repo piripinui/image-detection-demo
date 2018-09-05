@@ -744,7 +744,104 @@ function doCapture() {
 	})
 }
 
-function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, markerIcon) {
+var poleIntersections = {
+	type: "FeatureCollection",
+	features: []
+};
+
+var txIntersections = {
+	type: "FeatureCollection",
+	features: []
+};
+
+var rustytxIntersections = {
+	type: "FeatureCollection",
+	features: []
+};
+
+var svMarkers = [];
+
+function placeIntersectClustersOnMap(intersections, mapSource, desc, icon, markerIcon) {
+	var maxDistance = 0.010; // Maximum distance to consider points as part of a cluster in kilometres.
+	var options = {
+		minPoints: 1
+	};
+	var clustered = turf.clustersDbscan(intersections, maxDistance, options);
+
+	// Add as a feature to the map.
+	var geojsonFormat = new ol.format.GeoJSON();
+	
+	var clusters = {};
+	
+	// Gather all the points within a cluster.
+	for (i = 0; i < clustered.features.length; i++) {
+		var intersectPoint = clustered.features[i];
+		
+		if (intersectPoint.properties.dbscan != "noise") {
+			// Defines the cluster number this point is part of.
+			var clusterNum = intersectPoint.properties.cluster;
+			// Defines the type of point - can be "core" or "edge".
+			var clusterType = intersectPoint.properties.cluster;
+			
+			if (typeof clusters[clusterNum] == "undefined")
+				clusters[clusterNum] = {
+					type: "FeatureCollection",
+					features: []
+				};
+				
+			clusters[clusterNum].features.push(intersectPoint);
+		}
+	}
+	
+	// Calculate the centre of mass for each cluster.
+	for (var property in clusters) {
+		if (clusters.hasOwnProperty(property)) {
+			var fc = clusters[property];
+			var centre = turf.centerOfMass(fc);
+			
+			var vecFeature = geojsonFormat.readFeature(centre,
+			{
+				dataProjection: 'EPSG:4326',
+				featureProjection: 'EPSG:3857'
+			});
+			
+			var vecStyle = new ol.style.Style({
+				image: new ol.style.Icon({
+						src: icon,
+						scale: 0.02
+				})
+			});
+			vecFeature.setStyle(vecStyle);
+			
+			mapSource.addFeature(vecFeature);
+			
+			map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
+			var marker;
+			
+			if (markerIcon) {
+				marker = new google.maps.Marker({
+					position: {lat: centre.geometry.coordinates[1], lng: centre.geometry.coordinates[0]},
+					map: panorama,
+					label: desc,
+					title: desc,
+					icon: markerIcon
+				});
+			}
+			else {
+				marker = new google.maps.Marker({
+					position: {lat: centre.geometry.coordinates[1], lng: centre.geometry.coordinates[0]},
+					map: panorama,
+					label: desc,
+					title: desc
+				});
+			}
+			
+			svMarkers.push(marker);
+		}
+	}
+}
+
+function createPointsFromIntersections(intersectVectors, intersectPoints, mapSource, desc, icon, markerIcon) {
 	// Loop over intersect vectors to find points.	Each element of intersectVectors array contains a FeatureCollection of
 	// lines representing vectors pointing at detected objects in the image taken at that location. We then look for intersections
 	// between the vectors at one location with those at the next location - an intersection point is probably the actual location
@@ -767,50 +864,15 @@ function createPointsFromIntersections(intersectVectors, mapSource, desc, icon, 
 					if (intersects.features.length > 0) {
 						var intersectPoint = intersects.features[0];
 						
-						// Add as a feature to the map.
-						var geojsonFormat = new ol.format.GeoJSON();
-							
-						var vecFeature = geojsonFormat.readFeature(intersectPoint,
-						{
-							dataProjection: 'EPSG:4326',
-							featureProjection: 'EPSG:3857'
-						});
-						
-						var vecStyle = new ol.style.Style({
-							image: new ol.style.Icon({
-									src: icon,
-									scale: 0.02
-							})
-						});
-						vecFeature.setStyle(vecStyle);
-						
-						mapSource.addFeature(vecFeature);
-						
-						map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
-						var marker;
-						
-						if (markerIcon) {
-							marker = new google.maps.Marker({
-								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
-								map: panorama,
-								label: desc,
-								title: desc,
-								icon: markerIcon
-							});
-						}
-						else {
-							marker = new google.maps.Marker({
-								position: {lat: intersectPoint.geometry.coordinates[1], lng: intersectPoint.geometry.coordinates[0]},
-								map: panorama,
-								label: desc,
-								title: desc
-							});
-						}
+						intersectPoint.properties.detectionType = line1.properties.detectionType;
+						intersectPoints.features.push(intersectPoint);
 					}
 				}
 			}
 		}
 	}
+	
+	placeIntersectClustersOnMap(intersectPoints, mapSource, desc, icon, markerIcon);
 
 	console.log("Intersection points created.");
 }
@@ -819,6 +881,14 @@ function setupIntersectVectors() {
 	poleIntersectVectors = [];
 	rustytxIntersectVectors = [];
 	txIntersectVectors = [];
+}
+
+function clearMarkers() {
+	svMarkers.forEach(function(marker) {
+		marker.setMap(null);
+	});
+	
+	svMarkers = [];
 }
 
 // If you add more angles here, when following a route the code will adjust the streeview bearing according to the angle list.
@@ -891,9 +961,13 @@ function doFollowRoute() {
 			var fail = cur.fail(next);
 			return result ? result : fail;
 		}, $.Deferred().resolve()).then(function() {
-			createPointsFromIntersections(poleIntersectVectors, poleSource, "Potential Pole Location", 'calculated_route_icon.png');
-			createPointsFromIntersections(rustytxIntersectVectors, poleSource, "Potential Rusty Transformer", 'round_blue.png');
-			createPointsFromIntersections(txIntersectVectors, poleSource, "Potential Transformer Location", 'round_orange.png', 'google_push_pin_orange.png');
+				
+			poleSource.clear();
+			clearMarkers();
+			
+			createPointsFromIntersections(poleIntersectVectors, poleIntersections, poleSource, "Potential Pole Location", 'calculated_route_icon.png');
+			createPointsFromIntersections(rustytxIntersectVectors, rustytxIntersections, poleSource, "Potential Rusty Transformer", 'round_blue.png');
+			createPointsFromIntersections(txIntersectVectors, txIntersections, poleSource, "Potential Transformer Location", 'round_orange.png', 'google_push_pin_orange.png');
 		});
 	}
 	else {
