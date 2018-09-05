@@ -346,17 +346,8 @@ function createDownloadLink() {
 	$("#download").css("border", "0.1em solid #FFFFFF");
 }
 
-function addFeaturesForDownload(aFeature, gCoord, type) {
-	downloadFeatures.features.push({
-		type: "Feature",
-		properties: {
-			type: type
-		},
-		geometry: {
-			type: "Point",
-			coordinates: [gCoord.lng(), gCoord.lat()]
-		}
-	});
+function addFeaturesForDownload(aFeature) {
+	downloadFeatures.features.push(aFeature);
 	if (downloadFeatures.features.length > 0)
 		createDownloadLink();
 }
@@ -506,8 +497,6 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						poleFeature.setStyle(poleStyle);
 	
 						poleSource.addFeature(poleFeature);
-						
-						addFeaturesForDownload(poleFeature, gCoord, type);	
 
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
 						poleIntersectVectors[poleIntersectVectors.length - 1].features.push(locVector);
@@ -550,8 +539,6 @@ async function doAnalyse(evt, position, bearing, dfd) {
 	
 						slSource.addFeature(slFeature);
 						
-						addFeaturesForDownload(slFeature, gCoord, type);
-						
 						break;
 					case 'transformer':
 						txFeature = new ol.Feature({
@@ -570,7 +557,6 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
-						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
 						txIntersectVectors[txIntersectVectors.length - 1].features.push(locVector);
@@ -594,8 +580,6 @@ async function doAnalyse(evt, position, bearing, dfd) {
 	
 						txSource.addFeature(txFeature);
 						
-						addFeaturesForDownload(txFeature, gCoord, type);
-						
 						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
 						rustytxIntersectVectors[rustytxIntersectVectors.length - 1].features.push(locVector);
 						
@@ -617,8 +601,6 @@ async function doAnalyse(evt, position, bearing, dfd) {
 						txFeature.setStyle(txStyle);
 	
 						txSource.addFeature(txFeature);
-						
-						addFeaturesForDownload(txFeature, gCoord, type);
 						
 						break;
 					default:
@@ -762,7 +744,7 @@ var rustytxIntersections = {
 var svMarkers = [];
 
 function placeIntersectClustersOnMap(intersections, mapSource, desc, icon, markerIcon) {
-	var maxDistance = 0.010; // Maximum distance to consider points as part of a cluster in kilometres.
+	var maxDistance = 0.015; // Maximum distance to consider points as part of a cluster in kilometres.
 	var options = {
 		minPoints: 1
 	};
@@ -799,6 +781,10 @@ function placeIntersectClustersOnMap(intersections, mapSource, desc, icon, marke
 			var fc = clusters[property];
 			var centre = turf.centerOfMass(fc);
 			
+			centre.properties.detectionType = fc.features[0].properties.detectionType;
+			
+			addFeaturesForDownload(centre);
+			
 			var vecFeature = geojsonFormat.readFeature(centre,
 			{
 				dataProjection: 'EPSG:4326',
@@ -816,6 +802,7 @@ function placeIntersectClustersOnMap(intersections, mapSource, desc, icon, marke
 			mapSource.addFeature(vecFeature);
 			
 			map.getView().setCenter(vecFeature.getGeometry().getCoordinates());
+			
 			var marker;
 			
 			if (markerIcon) {
