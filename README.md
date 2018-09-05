@@ -67,16 +67,17 @@ Once the inference graph exists, you can actually detect objects in image files 
 
 The first parameter defines the port number the service will run on. The last parameter defines the directory from which the Tensorflow script should read images from. This directory should match the directory the server writes to (see above).
 
-### Log Files
-
-Both of the server create log files. The nodejs server creates its log files in the directory called `logs`. The Tensorflow server create its log files in the directory called `Custom-Object-Detection/logs`.
-
 ### Services
 The Tensorflow-based server creates a single endpoint used in the demo:
 
 |Service Name       |Description                                                  |
 |-------------------|-------------------------------------------------------------|
 |`/startdetection`    |GET request to analyse a JPEG file placed into a nominated directory in order to detect utility equipment. Returns a JSON string containing information about what was detected and creates processed image showing the detected objects in the a subdirectory called `processed` beneath the nominated directory. |
+
+
+## Log Files
+
+Both of the server create log files. The nodejs server creates its log files in the directory called `logs`. The Tensorflow server create its log files in the directory called `Custom-Object-Detection/logs`.
 
 ## Installation
 
