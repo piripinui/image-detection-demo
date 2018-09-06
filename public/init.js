@@ -393,6 +393,9 @@ function getTelemetry(detectionType, detectionClass, imgWidth, pos) {
 
 function calculateFOV() {
 	var fov = 180 / Math.pow(2, panorama.getZoom()); 
+	
+	fov = isNaN(fov) ? 90 : fov;
+	
 	return fov;
 }
 
