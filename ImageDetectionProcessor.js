@@ -6,7 +6,6 @@ urlPattern = require('url-pattern'),
 helmet = require('helmet'),
 Promise = require('promise'),
 path = require('path'),
-shell = require('shelljs'),
 bodyParser = require('body-parser'),
 imagemin = require('imagemin'),
 pngToJpeg = require('png-to-jpeg'),
@@ -81,6 +80,36 @@ class ImageDetectionProcessor {
 				new transports.File({ filename: 'logs/server.log' })
 			]
 		});
+	}
+	
+	cleanupImageDir() {
+		const processor = this;
+		
+		const aPromise = new Promise(function (resolve, reject) {
+			fs.readdir(processor.imageDir, function(err, files) {
+				for (let i = 0; i < files.length; i++) {
+					var aFile = files[i];
+					
+					var found = aFile.match(/jp[e]?g/g);
+					
+					if (found) {
+						// Got a jpg file - delete it.
+						var fn = path.join(processor.imageDir, aFile);
+						processor.logger.info("Deleting file: " + fn);
+						try {
+							fs.unlinkSync(fn);
+						}
+						catch(err) {
+							processor.logger.error("Could not delete file: " + fn);
+						}
+					}
+				}
+				
+				resolve();
+			});
+		});
+		
+		return aPromise;
 	}
 	
 	initialiseEndpoints() {
@@ -285,31 +314,18 @@ class ImageDetectionProcessor {
 			// Before writing the image out, check there are no existing JPEG files in the image directory. If
 			// there are, delete them first.
 			
-			const aPromise = new Promise(function (resolve, reject) {
-				fs.readdir(processor.imageDir, function(err, files) {
-					for (let i = 0; i < files.length; i++) {
-						var aFile = files[i];
-						
-						var found = aFile.match(/jp[e]?g/g);
-						
-						if (found) {
-							// Got a jpg file - delete it.
-							var fn = path.join(processor.imageDir, aFile);
-							processor.logger.info("Deleting file: " + fn);
-							fs.unlinkSync(fn);
-						}
-					}
-					
-					resolve();
-				});
-			});
+			var aPromise = processor.cleanupImageDir();
 			
 			aPromise.then(function() {
 				var fullFilename = path.join(processor.imageDir, filename);
 				
 				fs.writeFile(fullFilename, buf, function(err) {
-					if (err) 
-						res.status(500).end();
+					if (err) {
+						aPromise = processor.cleanupImageDir();
+						aPromise.then(function() {
+							res.status(500).end();
+						});
+					}
 					else {
 						imagemin([fullFilename], processor.imageDir, {
 							plugins: [
@@ -327,13 +343,19 @@ class ImageDetectionProcessor {
 								}, function (detectionErr, resp, data) {
 									if (detectionErr) {
 										processor.logger.error("Problem during image detection: " + detectionErr);
-										res.status(500).end();
+										aPromise = processor.cleanupImageDir();
+										aPromise.then(function() {
+											res.status(500).end();
+										});
 										return;
 									}
 									
 									if (resp.statusCode >= 500 && resp.statusCode < 600) {
 										processor.logger.error("Got error for detection server: " + resp.statusCode);
-										res.status(resp.statusCode).end();
+										aPromise = processor.cleanupImageDir();
+										aPromise.then(function() {
+											res.status(resp.statusCode).end();
+										});
 										return;
 									}
 									
@@ -348,7 +370,10 @@ class ImageDetectionProcessor {
 								  
 									fs.readFile(targetFile, (err, imgData) => {
 										if (err) {
-											res.status(500).end();
+											aPromise = processor.cleanupImageDir();
+											aPromise.then(function() {
+												res.status(500).end();
+											});
 											return;
 										}
 										else {
@@ -359,7 +384,10 @@ class ImageDetectionProcessor {
 											fs.rename(srcFile, storeFile, (err, data) => {
 												if (err) {
 													processor.logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
-													res.status(500).end();
+													aPromise = processor.cleanupImageDir();
+													aPromise.then(function() {
+														res.status(500).end();
+													});
 													return;
 												}
 												else {
@@ -373,7 +401,10 @@ class ImageDetectionProcessor {
 													fs.writeFile(annoFile, anno, (err, data) => {
 														if (err) {
 															processor.logger.error("Problem writing file " + annoFile);
-															res.status(500).end();
+															aPromise = processor.cleanupImageDir();
+															aPromise.then(function() {
+																res.status(500).end();
+															});
 															return;
 														}
 														else 
@@ -390,7 +421,10 @@ class ImageDetectionProcessor {
 													fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
 														if (err) {
 															processor.logger.error("Problem writing file " + locFile);
-															res.status(500).end();
+															aPromise = processor.cleanupImageDir();
+															aPromise.then(function() {
+																res.status(500).end();
+															});
 															return;
 														}
 														else 
@@ -405,7 +439,10 @@ class ImageDetectionProcessor {
 													}
 													catch(err) {
 														processor.logger.error("Failed to return processed image: " + err);
-														res.status(500).end();
+														aPromise = processor.cleanupImageDir();
+														aPromise.then(function() {
+															res.status(500).end();
+														});
 														return;
 													}
 													result.data = buf;
