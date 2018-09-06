@@ -401,7 +401,7 @@ function calculateFOV() {
 
 async function doAnalyse(evt, position, bearing, dfd) {
 	// Sleep to give streetview time to render image.
-	await sleep(800);
+	await sleep(1000);
 	
 	if (!position) {
 		var pos = panorama.getPosition();
