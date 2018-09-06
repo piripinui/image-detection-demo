@@ -1,7 +1,7 @@
 var sessionToken,
 map,view, markerFeature, markerSource, poleSource, intersectSource, heading,
 routeSource, routeStyle, currentRoute, followBearing,
-poleIntersectVectors, rustytxIntersectVectors,
+poleIntersectVectors, rustytxIntersectVectors, streetlightIntersectVectors,
 setDestinationMode =false,
 setOriginMode = false,
 originCoord, destCoord, startFeature, endFeature,
@@ -542,6 +542,9 @@ async function doAnalyse(evt, position, bearing, dfd) {
 	
 						slSource.addFeature(slFeature);
 						
+						var locVector = getTelemetry(type, result.classes[i], result.imgWidth, pos);
+						streetlightIntersectVectors[streetlightIntersectVectors.length - 1].features.push(locVector);
+						
 						break;
 					case 'transformer':
 						txFeature = new ol.Feature({
@@ -744,6 +747,11 @@ var rustytxIntersections = {
 	features: []
 };
 
+var streetlightIntersections = {
+	type: "FeatureCollection",
+	features: []
+};
+
 var svMarkers = [];
 
 function placeIntersectClustersOnMap(intersections, mapSource, desc, icon, markerIcon) {
@@ -871,6 +879,7 @@ function setupIntersectVectors() {
 	poleIntersectVectors = [];
 	rustytxIntersectVectors = [];
 	txIntersectVectors = [];
+	streetlightIntersectVectors = [];
 }
 
 function clearMarkers() {
@@ -925,6 +934,10 @@ function doFollowRoute() {
 						type: "FeatureCollection",
 						features: []
 					});
+					streetlightIntersectVectors.push({
+						type: "FeatureCollection",
+						features: []
+					});
 					doAnalyse(null, coord, bearing, dfd);
 				});
 				return dfd;
@@ -963,6 +976,7 @@ function doFollowRoute() {
 			createPointsFromIntersections(poleIntersectVectors, poleIntersections, poleSource, "Pole", 'calculated_route_icon.png');
 			createPointsFromIntersections(rustytxIntersectVectors, rustytxIntersections, poleSource, "Rusty Transformer", 'round_blue.png');
 			createPointsFromIntersections(txIntersectVectors, txIntersections, poleSource, "Transformer", 'round_orange.png', 'google_push_pin_orange.png');
+			createPointsFromIntersections(streetlightIntersectVectors, streetlightIntersections, poleSource, "Streetlight", 'round_purple.png', 'google_push_pin_orange.png');
 		});
 	}
 	else {
@@ -982,6 +996,10 @@ function doAnalyseOneShot() {
 		features: []
 	});
 	txIntersectVectors.push({
+		type: "FeatureCollection",
+		features: []
+	});
+	streetlightIntersectVectors.push({
 		type: "FeatureCollection",
 		features: []
 	});
