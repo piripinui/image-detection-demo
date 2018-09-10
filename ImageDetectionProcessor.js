@@ -290,7 +290,7 @@ class ImageDetectionProcessor {
 		})
 		
 		this.app.post('/analyseimage', function (req, res) {
-			processor.logger.info("analyseimage request received from " + req.headers.referer);
+			processor.logger.info("analyseimage request received from " + req.connection.remoteAddress);
 			const bodyData = JSON.parse(req.body);
 			const mt = processor.base64MimeType(bodyData.base64Data);  
 			var filename;
