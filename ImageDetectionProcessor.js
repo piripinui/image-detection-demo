@@ -14,13 +14,17 @@ polyline = require( 'google-polyline'),
 jpeg = require('jpeg-js');
 
 class ImageDetectionProcessor {
-	constructor(listenPort, imageDir) {
+	constructor(listenPort, imageDir, storeImageData) {
 		this.app = app;
 		this.listenPort = listenPort;
 
 		if (!imageDir)
 			imageDir = "images";
 		this.imageDir = imageDir;
+		
+		if (!storeImageData)
+			storeImageData = true;
+		this.storeImageData = storeImageData;
 
 		this.initialise();
 	}
@@ -28,6 +32,8 @@ class ImageDetectionProcessor {
 	initialise() {		
 		const processor = this;
 		this.initialiseLogger();
+		
+		this.logger.info("Saving image data = " + this.storeImageData);
 		
 		this.app.use(express.static(path.join(__dirname, 'public')));
 
@@ -380,78 +386,103 @@ class ImageDetectionProcessor {
 											const fn = filename.replace("png", "jpg");
 											const srcFile = path.join(processor.imageDir, fn);
 											const storeFile = path.join(processor.imageDir, "stored", fn);
-											// Move source image to stored images with annotations in a subdirectory called "stored".
-											fs.rename(srcFile, storeFile, (err, data) => {
-												if (err) {
-													processor.logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
-													aPromise = processor.cleanupImageDir();
-													aPromise.then(function() {
-														res.status(500).end();
-													});
-													return;
-												}
-												else {
-													processor.logger.info("File " + srcFile + " moved to /stored");
-													
-													const jpegData = jpeg.decode(imgData, true);
-													
-													// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
-													const anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
-													const annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
-													fs.writeFile(annoFile, anno, (err, data) => {
-														if (err) {
-															processor.logger.error("Problem writing file " + annoFile);
-															aPromise = processor.cleanupImageDir();
-															aPromise.then(function() {
-																res.status(500).end();
-															});
-															return;
-														}
-														else 
-															processor.logger.info("VOC file " + annoFile + " written successfully");
-													});
-													
-													// Create metadata file for position and bearing.
-													const locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
-													const posData = {
-														lat: bodyData.position.lat,
-														lng: bodyData.position.lng,
-														heading: bodyData.bearing	
-													};
-													fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
-														if (err) {
-															processor.logger.error("Problem writing file " + locFile);
-															aPromise = processor.cleanupImageDir();
-															aPromise.then(function() {
-																res.status(500).end();
-															});
-															return;
-														}
-														else 
-															processor.logger.info("Position metadata file " + locFile + " written successfully");
-													});
-
-													// Return the annotated file back to the requesting client along with the detection metadata.
-													const imgBuf = new Buffer(imgData);
-													
-													try {
-														var buf = imgBuf.toString('base64');
-													}
-													catch(err) {
-														processor.logger.error("Failed to return processed image: " + err);
+											
+											if (this.storeImageData) {
+												// Move source image to stored images with annotations in a subdirectory called "stored".
+												fs.rename(srcFile, storeFile, (err, data) => {
+													if (err) {
+														processor.logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
 														aPromise = processor.cleanupImageDir();
 														aPromise.then(function() {
 															res.status(500).end();
 														});
 														return;
 													}
-													result.data = buf;
-													result.imgWidth = jpegData.width;
-													result.imgHeight = jpegData.height;
-													res.writeHead(200, {'Content-Type': 'application/json'});
-													res.end(JSON.stringify(result));
+													else {
+														processor.logger.info("File " + srcFile + " moved to /stored");
+														
+														const jpegData = jpeg.decode(imgData, true);
+														
+														// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
+														const anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
+														const annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
+														fs.writeFile(annoFile, anno, (err, data) => {
+															if (err) {
+																processor.logger.error("Problem writing file " + annoFile);
+																aPromise = processor.cleanupImageDir();
+																aPromise.then(function() {
+																	res.status(500).end();
+																});
+																return;
+															}
+															else 
+																processor.logger.info("VOC file " + annoFile + " written successfully");
+														});
+														
+														// Create metadata file for position and bearing.
+														const locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
+														const posData = {
+															lat: bodyData.position.lat,
+															lng: bodyData.position.lng,
+															heading: bodyData.bearing	
+														};
+														fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
+															if (err) {
+																processor.logger.error("Problem writing file " + locFile);
+																aPromise = processor.cleanupImageDir();
+																aPromise.then(function() {
+																	res.status(500).end();
+																});
+																return;
+															}
+															else 
+																processor.logger.info("Position metadata file " + locFile + " written successfully");
+														});
+
+														// Return the annotated file back to the requesting client along with the detection metadata.
+														const imgBuf = new Buffer(imgData);
+														
+														try {
+															var buf = imgBuf.toString('base64');
+														}
+														catch(err) {
+															processor.logger.error("Failed to return processed image: " + err);
+															aPromise = processor.cleanupImageDir();
+															aPromise.then(function() {
+																res.status(500).end();
+															});
+															return;
+														}
+														result.data = buf;
+														result.imgWidth = jpegData.width;
+														result.imgHeight = jpegData.height;
+														res.writeHead(200, {'Content-Type': 'application/json'});
+														res.end(JSON.stringify(result));
+													}
+												});
+											}
+											else {
+												// Return the annotated file back to the requesting client along with the detection metadata.
+												const jpegData = jpeg.decode(imgData, true);
+												const imgBuf = new Buffer(imgData);
+												
+												try {
+													var buf = imgBuf.toString('base64');
 												}
-											});
+												catch(err) {
+													processor.logger.error("Failed to return processed image: " + err);
+													aPromise = processor.cleanupImageDir();
+													aPromise.then(function() {
+														res.status(500).end();
+													});
+													return;
+												}
+												result.data = buf;
+												result.imgWidth = jpegData.width;
+												result.imgHeight = jpegData.height;
+												res.writeHead(200, {'Content-Type': 'application/json'});
+												res.end(JSON.stringify(result));
+											}
 										}
 									});
 								});
