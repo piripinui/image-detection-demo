@@ -22,8 +22,6 @@ class ImageDetectionProcessor {
 			imageDir = "images";
 		this.imageDir = imageDir;
 		
-		if (!storeImageData)
-			storeImageData = true;
 		this.storeImageData = storeImageData;
 
 		this.initialise();
