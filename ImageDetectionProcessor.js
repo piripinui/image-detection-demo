@@ -133,8 +133,8 @@ class ImageDetectionProcessor {
 			}
 			
 			if (resp.statusCode >= 500 && resp.statusCode < 600) {
-				processor.logger.error("Got error for detection server: " + resp.statusCode);
-				aPromise = processor.cleanupImageDir();
+				processor.logger.error("Got error from the detection server: " + resp.statusCode);
+				var aPromise = processor.cleanupImageDir();
 				aPromise.then(function() {
 					res.status(resp.statusCode).end();
 				});
