@@ -6,7 +6,6 @@ optionDefinitions = [
 	  { name: 'help', alias: 'h', type: Boolean, defaultValue: false }
 ],
 listenPort = process.env.PORT || 3100,
-imageDir = process.argv[2],
 commandLineUsage = require('command-line-usage'),
 sections = [
   {
