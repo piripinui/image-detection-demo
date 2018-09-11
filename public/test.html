@@ -21,6 +21,7 @@
 				success: function(result) {
 					console.log("Image processed");
 					document.getElementById("inImage").src = "data:image/jpeg;base64," + result.data;
+					document.getElementById("msg").innerText = "Image processed ok.";
 				}
 			});
 		}
@@ -28,6 +29,24 @@
 	<style>
 		#app {
 			font-family: "Arial";
+		}
+		
+		#outImage {
+			position: absolute;
+			margin-left: 0%;
+			margin-top: 10%;
+		}
+		
+		#inImage {
+			position: absolute;
+			margin-left: 30%;
+			margin-top: 10%;
+		}
+		
+		#msg {
+			position: absolute;
+			margin-left: 0%;
+			margin-top: 5%;
 		}
 	</style>
 <head>
@@ -38,8 +57,11 @@
 		</h2>Choose a PNG file to process</h2>
 		<input type="file" name="picField" id="picField" size="24" onchange="preview_2(this);" alt=""/>
 		<button onclick="submit();">Submit</button>
-		<img id="outImage"></img>
-		<img id="inImage"></img>
+		<div id="images">
+			<img id="outImage"></img>
+			<img id="inImage"></img>
+		</div>
+		<span id="msg"></span>
 	</div>
 	
 	<script>
@@ -47,14 +69,18 @@
 			var tgt = evt.target || window.event.srcElement,
 				files = tgt.files;
 
-			// FileReader support
-			if (FileReader && files && files.length) {
-				var fr = new FileReader();
-				fr.onload = function () {
-					document.getElementById("outImage").src = fr.result;
-				}
-				fr.readAsDataURL(files[0]);
-			};
+			if (files[0] && files[0].name.includes(".png")) {
+				if (FileReader && files && files.length) {
+					var fr = new FileReader();
+					fr.onload = function () {
+						document.getElementById("outImage").src = fr.result;
+					}
+					fr.readAsDataURL(files[0]);
+				};
+				document.getElementById("msg").innerText = "File read ok - press submit to process.";
+			}
+			else
+				document.getElementById("msg").innerText = "Error: must be a PNG file";
 		}
 	</script>
 </body>
