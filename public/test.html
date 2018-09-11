@@ -73,7 +73,7 @@
 			var tgt = evt.target || window.event.srcElement,
 				files = tgt.files;
 
-			if (files[0] && files[0].name.includes(".png")) {
+			//if (files[0] && files[0].name.includes(".png")) {
 				if (FileReader && files && files.length) {
 					var fr = new FileReader();
 					fr.onload = function () {
@@ -82,9 +82,9 @@
 					fr.readAsDataURL(files[0]);
 				};
 				document.getElementById("msg").innerText = "File read ok - press submit to process.";
-			}
-			else
-				document.getElementById("msg").innerText = "Error: must be a PNG file";
+			//}
+			//else
+			//	document.getElementById("msg").innerText = "Error: must be a PNG file";
 		}
 	</script>
 </body>
