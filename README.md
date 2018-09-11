@@ -6,9 +6,15 @@ The map client is defined in the public directory by the file `image-detection-d
 
 ## The Application Server
 
-The app's nodejs-based server is defined in `ImageDetectionProcessor.js` and started by `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. To run this server type:
+The app's nodejs-based server is defined in `ImageDetectionProcessor.js` and started by `server.js`. It acts as the web server for the client and also middleware for passing requests for imagery processing to the ML backend. 
 
-`node server.js /foo/bar/images/`
+To see the command line options for the server, type:
+
+`node server.js -h`
+
+A typical server invocation is something like this:
+
+`node server.js --imagedir /foo/bar/images/`
 
 By default this server runs on port 3100 but it can be changed by setting the PORT environment variable. The command line parameter shown in the example above defines the directory the server will write image files to. Note that this directory should exist and should also have subdirectories called `processed` and `stored` beneath it. The `processed` directory is used by the image recognition service to store processed images (see below). The `stored` directory is used by the application server to create copies of the source images and a matching [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) XML metadata file based on the returned detection results that can be used for further image training refinement if desired. The server also creates a JSON file associated with the image that contains the lat/lon position and heading passed to it by the requesting client in the request body (see below).
 
