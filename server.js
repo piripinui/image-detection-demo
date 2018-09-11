@@ -17,19 +17,19 @@ sections = [
     header: 'Options',
     optionList: [
       {
-        name: 'imagedir',
-		alias: 'i',
+        name: optionDefinitions[0].name,
+		alias: optionDefinitions[0].alias,
         typeLabel: '{underline path}',
         description: 'The directory in which images are stored for detection processing.'
       },
 	  {
-        name: 'saveimagedata',
-		alias: 's',
+        name: optionDefinitions[1].name,
+		alias: optionDefinitions[1].alias,
         description: 'Save images with metadata from detection processing.'
       },
       {
-        name: 'help',
-		alias: 'h',
+        name: optionDefinitions[2].name,
+		alias: optionDefinitions[2].alias,
         description: 'Print this usage guide.'
       }
     ]
