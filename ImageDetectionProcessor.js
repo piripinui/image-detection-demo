@@ -129,6 +129,15 @@ class ImageDetectionProcessor {
 			limit: "5MB"
 		}))
 		
+		this.app.use(function (err, req, res, next) {
+			if (req.xhr) {
+				processor.logger.error("An error occurred: (" + err.status + "):" + err.message);
+				res.status(err.status).send({ error: err.message })
+			} else {
+				next(err)
+			}
+		}); 
+		
 		this.app.get('/initstreetviewsession*', function (req, res) {
 			// Creates the streetview session token and returns it to the requestor.
 			const pattern = new urlPattern(
