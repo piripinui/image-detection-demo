@@ -25,13 +25,22 @@
 			});
 		}
 	</script>
+	<style>
+		#app {
+			font-family: "Arial";
+		}
+	</style>
 <head>
 </head>
 <body>	
-	<input type="file" name="picField" id="picField" size="24" onchange="preview_2(this);" alt=""/>
-	<button onclick="submit();">Submit</button>
-	<img id="outImage"></img>
-	<img id="inImage"></img>
+	<div id="app">
+		<h1>Image Detection Test App</h1>
+		</h2>Choose a PNG file to process</h2>
+		<input type="file" name="picField" id="picField" size="24" onchange="preview_2(this);" alt=""/>
+		<button onclick="submit();">Submit</button>
+		<img id="outImage"></img>
+		<img id="inImage"></img>
+	</div>
 	
 	<script>
 		document.getElementById('picField').onchange = function (evt) {
