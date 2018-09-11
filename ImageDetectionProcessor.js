@@ -131,7 +131,7 @@ class ImageDetectionProcessor {
 		
 		this.app.use(function (err, req, res, next) {
 			if (req.xhr) {
-				processor.logger.error("An error occurred: (" + err.status + "):" + err.message);
+				processor.logger.error("Request " + req.url + " from " + req.connection.remoteAddress + " failed with error (" + err.status + "): " + err.message);
 				res.status(err.status).send({ error: err.message })
 			} else {
 				next(err)
