@@ -22,6 +22,10 @@
 					console.log("Image processed");
 					document.getElementById("inImage").src = "data:image/jpeg;base64," + result.data;
 					document.getElementById("msg").innerText = "Image processed ok.";
+				},
+				error: function(err) {
+					console.log("Got error from server: " + err);
+					document.getElementById("msg").innerText = "Error (" + err.status + "): " + err.statusText;
 				}
 			});
 		}
