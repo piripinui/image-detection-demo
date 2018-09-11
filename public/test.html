@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<title>Image Detection Test</title>
+	<script src="jquery-3.3.1.min.js"></script>
+	<script>
+		function submit() {
+			var body = {
+				position: {
+					lat: 0,
+					lng: 0
+				},
+				bearing: 0,
+				base64Data: document.getElementById("outImage").src
+			};			
+			$.ajax({
+				url: "/analyseimage",
+				type: "POST",
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify(body),
+				dataType: 'json',
+				success: function(result) {
+					console.log("Image processed");
+					document.getElementById("inImage").src = "data:image/jpeg;base64," + result.data;
+				}
+			});
+		}
+	</script>
+<head>
+</head>
+<body>	
+	<input type="file" name="picField" id="picField" size="24" onchange="preview_2(this);" alt=""/>
+	<button onclick="submit();">Submit</button>
+	<img id="outImage"></img>
+	<img id="inImage"></img>
+	
+	<script>
+		document.getElementById('picField').onchange = function (evt) {
+			var tgt = evt.target || window.event.srcElement,
+				files = tgt.files;
+
+			// FileReader support
+			if (FileReader && files && files.length) {
+				var fr = new FileReader();
+				fr.onload = function () {
+					document.getElementById("outImage").src = fr.result;
+				}
+				fr.readAsDataURL(files[0]);
+			};
+		}
+	</script>
+</body>
+</html>

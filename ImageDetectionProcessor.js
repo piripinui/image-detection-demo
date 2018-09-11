@@ -295,7 +295,17 @@ class ImageDetectionProcessor {
 		
 		this.app.post('/analyseimage', function (req, res) {
 			processor.logger.info("analyseimage request received from " + req.connection.remoteAddress);
-			const bodyData = JSON.parse(req.body);
+			var bodyData;
+			try {
+				bodyData = JSON.parse(req.body);
+			}
+			catch(err) {
+				// The supplied data is not JSON, abort.
+				res.status(400).end();
+				processor.logger.error("Bad request, body content is not JSON - returning error code 400");
+				return;
+			}
+			
 			const mt = processor.base64MimeType(bodyData.base64Data);  
 			var filename;
 			const d = new Date();
@@ -328,164 +338,174 @@ class ImageDetectionProcessor {
 						aPromise = processor.cleanupImageDir();
 						aPromise.then(function() {
 							res.status(500).end();
+							processor.logger.error("Could not write the file " + fullFilename + " (" + err + ") - returning error code 500");
 						});
 					}
 					else {
-						imagemin([fullFilename], processor.imageDir, {
-							plugins: [
-								pngToJpeg({quality: 90})
-							]
-						}).then((files) => {
-							const newFn = fullFilename.replace("png", "jpg");
-							fs.rename(fullFilename, newFn, function(err) {
-								if ( err ) processor.logger.error('ERROR: ' + err);
-								processor.logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
-								
-								request({
-									uri: "http://localhost:3200/startdetection",
-									method: "GET"
-								}, function (detectionErr, resp, data) {
-									if (detectionErr) {
-										processor.logger.error("Problem during image detection: " + detectionErr);
-										aPromise = processor.cleanupImageDir();
-										aPromise.then(function() {
-											res.status(500).end();
-										});
-										return;
-									}
+						// If the image is a PNG file, convert it to JPEG.
+						if (mt == 'image/png') {
+							imagemin([fullFilename], processor.imageDir, {
+								plugins: [
+									pngToJpeg({quality: 90})
+								]
+							}).then((files) => {
+								const newFn = fullFilename.replace("png", "jpg");
+								fs.rename(fullFilename, newFn, function(err) {
+									if ( err ) processor.logger.error('ERROR: ' + err);
+									processor.logger.info("Renamed " + fullFilename + " to " + newFn + "...making detection request.");
 									
-									if (resp.statusCode >= 500 && resp.statusCode < 600) {
-										processor.logger.error("Got error for detection server: " + resp.statusCode);
-										aPromise = processor.cleanupImageDir();
-										aPromise.then(function() {
-											res.status(resp.statusCode).end();
-										});
-										return;
-									}
-									
-									processor.logger.info("Start detection request succeeded..." + data);
-									
-									const result = JSON.parse(data);
-
-									// Return the processed image to the requestor but also store the source image with Pascal VOC XML metadata based
-									// on the detection results.
-									
-									const targetFile = path.join(processor.imageDir, 'processed', filename.replace("png", "jpg"));
-								  
-									fs.readFile(targetFile, (err, imgData) => {
-										if (err) {
+									request({
+										uri: "http://localhost:3200/startdetection",
+										method: "GET"
+									}, function (detectionErr, resp, data) {
+										if (detectionErr) {
+											processor.logger.error("Problem during image detection: " + detectionErr);
 											aPromise = processor.cleanupImageDir();
 											aPromise.then(function() {
 												res.status(500).end();
 											});
 											return;
 										}
-										else {
-											const fn = filename.replace("png", "jpg");
-											const srcFile = path.join(processor.imageDir, fn);
-											const storeFile = path.join(processor.imageDir, "stored", fn);
-											
-											if (this.storeImageData) {
-												// Move source image to stored images with annotations in a subdirectory called "stored".
-												fs.rename(srcFile, storeFile, (err, data) => {
-													if (err) {
-														processor.logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
-														aPromise = processor.cleanupImageDir();
-														aPromise.then(function() {
-															res.status(500).end();
-														});
-														return;
-													}
-													else {
-														processor.logger.info("File " + srcFile + " moved to /stored");
-														
-														const jpegData = jpeg.decode(imgData, true);
-														
-														// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
-														const anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
-														const annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
-														fs.writeFile(annoFile, anno, (err, data) => {
-															if (err) {
-																processor.logger.error("Problem writing file " + annoFile);
-																aPromise = processor.cleanupImageDir();
-																aPromise.then(function() {
-																	res.status(500).end();
-																});
-																return;
-															}
-															else 
-																processor.logger.info("VOC file " + annoFile + " written successfully");
-														});
-														
-														// Create metadata file for position and bearing.
-														const locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
-														const posData = {
-															lat: bodyData.position.lat,
-															lng: bodyData.position.lng,
-															heading: bodyData.bearing	
-														};
-														fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
-															if (err) {
-																processor.logger.error("Problem writing file " + locFile);
-																aPromise = processor.cleanupImageDir();
-																aPromise.then(function() {
-																	res.status(500).end();
-																});
-																return;
-															}
-															else 
-																processor.logger.info("Position metadata file " + locFile + " written successfully");
-														});
+										
+										if (resp.statusCode >= 500 && resp.statusCode < 600) {
+											processor.logger.error("Got error for detection server: " + resp.statusCode);
+											aPromise = processor.cleanupImageDir();
+											aPromise.then(function() {
+												res.status(resp.statusCode).end();
+											});
+											return;
+										}
+										
+										processor.logger.info("Start detection request succeeded..." + data);
+										
+										const result = JSON.parse(data);
 
-														// Return the annotated file back to the requesting client along with the detection metadata.
-														const imgBuf = new Buffer(imgData);
-														
-														try {
-															var buf = imgBuf.toString('base64');
-														}
-														catch(err) {
-															processor.logger.error("Failed to return processed image: " + err);
+										// Return the processed image to the requestor but also store the source image with Pascal VOC XML metadata based
+										// on the detection results.
+										
+										const targetFile = path.join(processor.imageDir, 'processed', filename.replace("png", "jpg"));
+									  
+										fs.readFile(targetFile, (err, imgData) => {
+											if (err) {
+												aPromise = processor.cleanupImageDir();
+												aPromise.then(function() {
+													res.status(500).end();
+												});
+												return;
+											}
+											else {
+												const fn = filename.replace("png", "jpg");
+												const srcFile = path.join(processor.imageDir, fn);
+												const storeFile = path.join(processor.imageDir, "stored", fn);
+												
+												if (this.storeImageData) {
+													// Move source image to stored images with annotations in a subdirectory called "stored".
+													fs.rename(srcFile, storeFile, (err, data) => {
+														if (err) {
+															processor.logger.error("Error copying " + srcFile + " to " + storeFile + " (" + err.message + ")");
 															aPromise = processor.cleanupImageDir();
 															aPromise.then(function() {
 																res.status(500).end();
 															});
 															return;
 														}
-														result.data = buf;
-														result.imgWidth = jpegData.width;
-														result.imgHeight = jpegData.height;
-														res.writeHead(200, {'Content-Type': 'application/json'});
-														res.end(JSON.stringify(result));
-													}
-												});
-											}
-											else {
-												// Return the annotated file back to the requesting client along with the detection metadata.
-												const jpegData = jpeg.decode(imgData, true);
-												const imgBuf = new Buffer(imgData);
-												
-												try {
-													var buf = imgBuf.toString('base64');
-												}
-												catch(err) {
-													processor.logger.error("Failed to return processed image: " + err);
-													aPromise = processor.cleanupImageDir();
-													aPromise.then(function() {
-														res.status(500).end();
+														else {
+															processor.logger.info("File " + srcFile + " moved to /stored");
+															
+															const jpegData = jpeg.decode(imgData, true);
+															
+															// Create a Pascal VOC XML file alongside the stored image to be used later for training if required.
+															const anno = processor.createAnnotation(filename.replace("png", "jpg"), 'pole_images', result, jpegData.width, jpegData.height);
+															const annoFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "xml"));
+															fs.writeFile(annoFile, anno, (err, data) => {
+																if (err) {
+																	processor.logger.error("Problem writing file " + annoFile);
+																	aPromise = processor.cleanupImageDir();
+																	aPromise.then(function() {
+																		res.status(500).end();
+																	});
+																	return;
+																}
+																else 
+																	processor.logger.info("VOC file " + annoFile + " written successfully");
+															});
+															
+															// Create metadata file for position and bearing.
+															const locFile = path.join(processor.imageDir, "stored", fn.replace("jpg", "json"));
+															const posData = {
+																lat: bodyData.position.lat,
+																lng: bodyData.position.lng,
+																heading: bodyData.bearing	
+															};
+															fs.writeFile(locFile, JSON.stringify(posData), (err, data) => {
+																if (err) {
+																	processor.logger.error("Problem writing file " + locFile);
+																	aPromise = processor.cleanupImageDir();
+																	aPromise.then(function() {
+																		res.status(500).end();
+																	});
+																	return;
+																}
+																else 
+																	processor.logger.info("Position metadata file " + locFile + " written successfully");
+															});
+
+															// Return the annotated file back to the requesting client along with the detection metadata.
+															const imgBuf = new Buffer(imgData);
+															
+															try {
+																var buf = imgBuf.toString('base64');
+															}
+															catch(err) {
+																processor.logger.error("Failed to return processed image: " + err);
+																aPromise = processor.cleanupImageDir();
+																aPromise.then(function() {
+																	res.status(500).end();
+																});
+																return;
+															}
+															result.data = buf;
+															result.imgWidth = jpegData.width;
+															result.imgHeight = jpegData.height;
+															res.writeHead(200, {'Content-Type': 'application/json'});
+															res.end(JSON.stringify(result));
+														}
 													});
-													return;
 												}
-												result.data = buf;
-												result.imgWidth = jpegData.width;
-												result.imgHeight = jpegData.height;
-												res.writeHead(200, {'Content-Type': 'application/json'});
-												res.end(JSON.stringify(result));
+												else {
+													// Return the annotated file back to the requesting client along with the detection metadata.
+													const jpegData = jpeg.decode(imgData, true);
+													const imgBuf = new Buffer(imgData);
+													
+													try {
+														var buf = imgBuf.toString('base64');
+													}
+													catch(err) {
+														processor.logger.error("Failed to return processed image: " + err);
+														aPromise = processor.cleanupImageDir();
+														aPromise.then(function() {
+															res.status(500).end();
+														});
+														return;
+													}
+													result.data = buf;
+													result.imgWidth = jpegData.width;
+													result.imgHeight = jpegData.height;
+													res.writeHead(200, {'Content-Type': 'application/json'});
+													res.end(JSON.stringify(result));
+												}
 											}
-										}
+										});
 									});
 								});
 							});
-						});
+						}
+						else {
+							// File is a JPEG file, not acceptable.
+							res.status(400).end();
+							processor.logger.error("The server cannot process JPEG files");
+							processor.cleanupImageDir();
+						}
 					}
 				});
 			});
