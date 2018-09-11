@@ -10,7 +10,7 @@ The app's nodejs-based server is defined in `ImageDetectionProcessor.js` and sta
 
 To see the command line options for the server, type:
 
-`node server.js -h`
+`node server.js -h` or `node server.js --help`
 
 A typical server invocation is something like this:
 
