@@ -23,12 +23,33 @@
 					console.log("Image processed");
 					document.getElementById("inImage").src = "data:image/jpeg;base64," + result.data;
 					document.getElementById("msg").innerText = "Image processed ok.";
+					var table = document.getElementById("object_table");
+					
+					if (table)
+						table.remove();
+						
+					addResults(result);
 				},
 				error: function(err) {
 					console.log("Got error from server: " + err);
 					document.getElementById("msg").innerText = "Error (" + err.status + "): " + err.statusText;
 				}
 			});
+		}
+		
+		function addResults(result) {
+			tab = '<table id="object_table"><tr><th>Equipment</th><th>Probability</th>';
+			
+			for (i = 0; i < result.classes.length; i++) {
+				var type = result.classes[i].type;
+				var percent = result.classes[i].probability;
+				
+				tab += "<tr><td>" + type + "</td><td>" + percent + "</td><td></tr>";
+			}
+			
+			tab += "</table>";
+			
+			document.getElementById("results").insertAdjacentHTML('beforeend', tab);
 		}
 	</script>
 	<style>
@@ -51,7 +72,20 @@
 		#msg {
 			position: absolute;
 			margin-left: 0%;
-			margin-top: 5%;
+			margin-top: 0%;
+		}
+		
+		#results {
+			position: absolute;
+			margin-top: 2%;
+			margin-left: 0%;
+			width: 100%;
+		}
+		
+		#object_table {
+			position: absolute;
+			margin-left: 0%;
+			margin-top: 2%;
 		}
 	</style>
 <head>
@@ -66,7 +100,9 @@
 			<img id="outImage"></img>
 			<img id="inImage"></img>
 		</div>
-		<span id="msg"></span>
+		<div id="results">
+			<span id="msg"></span>
+		</div>
 	</div>
 	
 	<script>
