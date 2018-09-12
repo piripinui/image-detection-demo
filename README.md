@@ -117,4 +117,4 @@ Keys to access the [Google Maps](https://developers.google.com/maps/documentatio
 |`public/tile_api_key.txt`       |Holds the API for the Google Tile API           |
 
 ## Test Client
-There is a simple test client called *test.html* which can be used to submit PNG or JPEG images to the TensorFlow server and see the results. It basically calls the `/analyseimage` service, using a POST JSON body with the image you have selected encoded and dummy settings for the location and bearing.
+There is a simple test client called *test.html* which can be used to submit PNG or JPEG images to the TensorFlow server and see the results. It basically calls the `/analyseimage` service, using a POST JSON body with the image you have selected encoded and dummy settings for the location and bearing. As such, it demonstrates the simplest way to call the TensorFlow image detection service and get a result.
