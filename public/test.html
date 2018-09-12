@@ -23,11 +23,9 @@
 					console.log("Image processed");
 					document.getElementById("inImage").src = "data:image/jpeg;base64," + result.data;
 					document.getElementById("msg").innerText = "Image processed ok.";
-					var table = document.getElementById("object_table");
 					
-					if (table)
-						table.remove();
-						
+					clearTable();
+					
 					addResults(result);
 				},
 				error: function(err) {
@@ -35,6 +33,13 @@
 					document.getElementById("msg").innerText = "Error (" + err.status + "): " + err.statusText;
 				}
 			});
+		}
+		
+		function clearTable() {
+			var table = document.getElementById("object_table");
+					
+			if (table)
+				table.remove();
 		}
 		
 		function addResults(result) {
@@ -114,6 +119,7 @@
 			fr.onload = function () {
 				document.getElementById("outImage").src = fr.result;
 				document.getElementById("msg").innerText = "File read ok - press submit to process.";
+				clearTable();
 			}
 			fr.readAsDataURL(files[0]);
 		};
