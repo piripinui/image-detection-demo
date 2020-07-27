@@ -11,7 +11,7 @@
     "google-polyline": "^1.0.0",
     "helmet": "^3.8.1",
     "imagemin": "^6.0.0",
-    "jpeg-js": "^0.3.4",
+    "jpeg-js": "^0.4.1",
     "png-to-jpeg": "^1.0.1",
     "promise": "^8.0.1",
     "request": "^2.81.0",
