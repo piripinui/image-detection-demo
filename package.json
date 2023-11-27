@@ -10,7 +10,7 @@
     "glob": "^7.1.2",
     "google-polyline": "^1.0.0",
     "helmet": "^3.8.1",
-    "imagemin": "^6.0.0",
+    "imagemin": "^7.0.0",
     "jpeg-js": "^0.3.4",
     "png-to-jpeg": "^1.0.1",
     "promise": "^8.0.1",
